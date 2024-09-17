@@ -9,6 +9,7 @@ Find arguments:
     -exec
         "find /var/log/ -iname *.log -exec ls -al {} 2>/dev/null \;" (finds all .log files within /var/log then executes ls -al for each result from the find command)
         To instead execute ls -al for all results all at once and only once, replace "\;" with "+"
+        "-exec cp {} /home \;" takes each line and if it is a filepath, copies that file to /home (wouldn't work with "+")
     Timestamp-based
         -atime 3 = accessed in last 3 days
         -amin -60 = accessed in last hour
@@ -17,3 +18,17 @@ Find arguments:
         -mtime X = modified in last X days
         -mmin -X = modified in last X mins
     -iname *.txt (finds all files ending in .txt, not case sensitive)
+    -inum 243857 (finds all files with inode number 243857)
+    -empty (finds empty files)
+    -printf (formats output)
+        %i: prints inode number
+        %f: prints file name without filepath
+        \n: prints new line
+        example: "-printf "%i %f\n" " prints each file's inode number, then a space, then its name, then a new line
+
+Cut arguments:
+    "cut -d"." -f3" divides each line into sections separated by periods, then prints only the third section of each line if it exists.
+    "cut -d"." -f3 -s" does the same thing, but does not print any lines that do not contain the delimiter "."
+
+Grep arguments:
+    "grep -v "crap" " matches everything that does NOT include "crap"

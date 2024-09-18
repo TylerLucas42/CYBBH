@@ -4,6 +4,37 @@ General Stuff:
 Add "2>/dev/null" to the end of any command to eliminate error messages from output (sends them to null)
 Braces {} allow you to execute a command multiple times with different arguments, ie.
     example: "mkdir directory/{subdir1,subdir2,subdir3}" (creates directory, directory/subdir1, directory/subdir2, and directory/subdir3)
+Single brackets and double brackets ([[ vs [) are the same, but [[ is not POSIX compliant
+#!/bin/bash (this is how you start a bash script)
+
+
+Command Substition (example):
+    #!/bin/bash
+    A=$(find /usr/bin -name passw)
+    echo $A
+    md5sum $A
+    file $A
+(save as script.sh, run by typing ./script.sh)
+(sets $A to find passwd file within /usr/bin, echoes the RESULT of the command, uses md5sum to verify integrity of the outputted file, and prints file data for the file.)
+Functionally, $A IS EQUAL TO the printed result of the specified command. However, the command can make changes before printing an output.
+
+
+Sed: https://www.geeksforgeeks.org/sed-command-in-linux-unix-with-examples/
+    Default: Prints result to screen as output
+    -i option (sed -i 'stuff' file.txt): OVERWRITES file.txt with output
+    The proper way to write sed is to do (sed <other options> -e 'commands' -e 'more commands' readingthisfile.txt)
+    Everything 
+    sed language (''):
+        sed '/#/d' file.txt (prints file.txt but all lines with '#' are removed)
+        sed 's/#//g' file.txt (prints file.txt but all instances of '#' are removed)
+        sed 's/crap/gold/' file.txt (prints file.txt but the first instance of "crap" per line is replaced wtih "gold")
+        sed 's/crap/gold/3' file.txt (prints file.txt but the third instance of "crap" per line is replaced wtih "gold")
+        sed 's/crap/gold/g' file.txt (prints file.txt but all instances of "crap" per line are replaced wtih "gold")
+        sed '12 s/crap/gold/g' file.txt (prints file.txt but all instances of "crap" on the 12th line ONLY are replaced wtih "gold")
+        sed 's/crap/gold/g2' file.txt (prints file.txt but the second instance onward of "crap" per line is replaced wtih "gold")
+        sed 's/crap/d'
+        echo "Welcome To The Geek Stuff" | sed 's/\(\b[A-Z]\)/\(\1\)/g' (prints "(W)elcome (T)o (T)he (G)eek (S)tuff")
+
 
 Find arguments:
     -exec
@@ -26,9 +57,32 @@ Find arguments:
         \n: prints new line
         example: "-printf "%i %f\n" " prints each file's inode number, then a space, then its name, then a new line
 
+Branching:
+if [[ $A == 4 ]]; then
+    commands
+elif [[ $B != 5]]; then
+    commands
+else
+    commands
+fi
+
+Compressing Files:
+    zip -r </filepath/filepath/dest.zip> </filepath/sourcedir> (zips the files and directory)
+    zip -r </filepath/filepath/dest.zip> </filepath/sourcedir/*> (only zips the files, not the directory)
+    tar -czf </filepath/dest.tar.gz> </filepath/sourcedir> (creates tarball--zips and tars all at once)
+
+MD5SUM:
+    md5sum text.txt (prints hash of a file)
+    echo -n string123 | md5sum (prints hash of a string)
+
 Cut arguments:
     "cut -d"." -f3" divides each line into sections separated by periods, then prints only the third section of each line if it exists.
     "cut -d"." -f3 -s" does the same thing, but does not print any lines that do not contain the delimiter "."
+    dirname "/filepath/crap.txt" (outputs "/filepath")
 
 Grep arguments:
     "grep -v "crap" " matches everything that does NOT include "crap"
+
+Ways to sort:
+    "sort | uniq"
+    "sort -u"

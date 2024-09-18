@@ -1,0 +1,9 @@
+#!/bin/bash
+
+find /bin /etc /var -mindepth 3 -maxdepth 3 -not -type p 1>output.txt 2>error.txt
+
+HASH=$(cat output.txt | wc -l)
+NOHASH=$(cat error.txt | wc -1)
+
+echo "Successfully Hashed Files: $HASH"
+echo "Unsuccessfully Hashed FILES: $NOHASH"

@@ -7,6 +7,10 @@ Braces {} allow you to execute a command multiple times with different arguments
 Single brackets and double brackets ([[ vs [) are the same, but [[ is not POSIX compliant
 #!/bin/bash (this is how you start a bash script)
 
+Directing output
+    Direct STDIN to a file: 0>input.txt
+    Direct STDOUT to a file: 1>output.txt
+    Direct STDERR to the void: 2>/dev/null
 
 Command Substition (example):
     #!/bin/bash
@@ -33,6 +37,7 @@ Sed: https://www.geeksforgeeks.org/sed-command-in-linux-unix-with-examples/
         sed '12 s/crap/gold/g' file.txt (prints file.txt but all instances of "crap" on the 12th line ONLY are replaced wtih "gold")
         sed 's/crap/gold/g2' file.txt (prints file.txt but the second instance onward of "crap" per line is replaced wtih "gold")
         sed 's/crap/d'
+        sed -n 15p file.txt (can be used to print only the 15th line of a file)
         echo "Welcome To The Geek Stuff" | sed 's/\(\b[A-Z]\)/\(\1\)/g' (prints "(W)elcome (T)o (T)he (G)eek (S)tuff")
 
 
@@ -42,15 +47,19 @@ Find arguments:
         To instead execute ls -al for all results all at once and only once, replace "\;" with "+"
         "-exec cp {} /home \;" takes each line and if it is a filepath, copies that file to /home (wouldn't work with "+")
     Timestamp-based
-        -atime 3 = accessed in last 3 days
+        -atime 3 = accessed 3 days ago
         -amin -60 = accessed in last hour
-        -ctime X = changed in last X days
-        -cmin -X = changed in last X mins
-        -mtime X = modified in last X days
-        -mmin -X = modified in last X mins
+        -ctime +2 = changed at least 2 days ago
+        -cmin X = changed X minutes ago
+        -mtime -X = modified in last X days
+        -mmin +X = modified at least X minutes ago
     -iname *.txt (finds all files ending in .txt, not case sensitive)
     -inum 243857 (finds all files with inode number 243857)
     -empty (finds empty files)
+    Depth
+        -mindepth 4 -maxdepth 4 (finds all files at least 4 levels deep and at most 4 levels deep, ie. exactly 4 levels deep
+    -not
+        "find ~ -name '*.bin' -not -name '*.*.bin' " (includes stuff.bin but not stuff.whoa.bin)
     -printf (formats output)
         %i: prints inode number
         %f: prints file name without filepath
@@ -65,6 +74,19 @@ elif [[ $B != 5]]; then
 else
     commands
 fi
+
+Looping:
+for n in a b c;
+do
+   echo $n
+done
+OR
+A=$(cat crap.txt)
+for n in $A;
+do
+	echo $n
+done
+(will print every line of crap.txt)
 
 Compressing Files:
     zip -r </filepath/filepath/dest.zip> </filepath/sourcedir> (zips the files and directory)
@@ -86,3 +108,4 @@ Grep arguments:
 Ways to sort:
     "sort | uniq"
     "sort -u"
+    "sort -t: -k3 -n" (sets delimiter ":" to cut line into kolumns, isolates the 3rd kolumn and sorts by number)

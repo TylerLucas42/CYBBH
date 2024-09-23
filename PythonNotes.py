@@ -25,16 +25,37 @@ word = "POTATO!!"
 word.split('O')
 #returns ['P', 'TAT', '!!']
 
-Modify deliverable.py so that it takes a number from the user and prints it (the number) if it isn’t divisible by 3 or 5. For multiples of 3 print 'fizz' instead. For multiples of 5 print 'buzz' instead.
-For multiples of 3 and 5 print 'fizzbuzz'.
+Modify deliverable.py and implement `guess_number` so that it repeatedly asks the user for a number between 0 and 100 inclusive. If the user correctly guesses the value of the given argument `n`, print 'WIN' and return. Otherwise indicate whether the guess was too high or too low. Test the deliverable manually or run `python3 check.py` to run the supplied unit tests.
+Modify deliverable.py and implement `guess_number` so that it repeatedly asks the user for a number between 0 and 100 inclusive. If the user correctly guesses the value of the given argument `n`, print "WIN" and exit out of the loop. Otherwise indicate whether the guess was "too high" or "too low". Test the deliverable manually or run `python3 check.py` to run the supplied unit tests.
 
 #!/usr/bin/env python3
-num = float(input('Enter any number:\n'))
-if ( num % 5 == 0 and num % 3 == 0):
-    print('fizzbuzz')
-elif (num % 5 == 0):
-    print('buzz')
-elif (num % 3 == 0):
-    print('fizz')
-else:
-    print(num)
+import random
+from collections import deque
+
+if __name__ == '__main__':
+    pass
+
+n = random(0,100)
+
+def guess_number(n):
+    pass
+    x = 200
+    while (x != n):
+        x = int(input('Enter a number: '))
+        if (x > 100 or x < 0):
+            print('Out of range! Must be within 0-100.')
+            continue
+        elif (x < n):
+            print('Too low!')
+            continue
+        elif (x > n):
+            print('Too high!')
+            continue
+        elif (x == n):
+            print('You got it!')
+            break
+        else:
+            print('Please input a number between 0-100.')
+
+guess_number(n)
+

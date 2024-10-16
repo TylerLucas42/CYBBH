@@ -1,0 +1,16 @@
+
+FASCInATING: adding an Alternate Data Stream to hide data in a file does NOT change the MD5sum hash
+
+Get processor info: Get-WmiObject win32_processor
+Read file: Get-Content
+Count file lines, avg/sum numbers: Measure-Object
+Grep (Regex): Select-String ("a|z") (to get all words containing either a or z - case insensitive by default)
+All aliases for a cmdlet: get-alias -definition (cmdlet)
+Get description of a service:
+	$crap = [Management.ManagementObject]::new("Win32_Service.Name='desiredservice'")
+	$crap
+Count number of chars in a file: 	Get-Content [FILENAME] | Measure-Object -Character
+		words in a file:	Get-Content [FILENAME] | Measure-Object -Word
+		lines in a file:	Get-Content [FILENAME] | Measure-Object -Line
+Compare 2 text files: compare-object (get-content one.txt) (get-content two.txt)
+Get all methods, properties, etc. for a cmdlet: (cmdlet) | get-member

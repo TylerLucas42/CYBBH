@@ -11,8 +11,8 @@ Day 1: DONE
 Day 2: 
 10: DONE
 11: DONE
-15: 
-16: 
+15: (requires setting up Volatility framework)
+16: (requries access via RDP)
 
 Windows Processes:
 7: 
@@ -20,7 +20,7 @@ Windows Processes:
 13: 
 
 Linux Processes:
-4: 
+4: (require access to Terra Box)
 8: 
 12: 
 14: 

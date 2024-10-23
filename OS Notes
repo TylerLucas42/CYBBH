@@ -1,0 +1,51 @@
+
+Forms of Persistence
+
+Make sure to understand user things with regard to windows boot process (etc profile)
+
+file /run/systemd/system (if not exists, it's sysv)
+
+ALL:
+- Strange ports: sequential, all the same, etc. (3389 is just RDP)
+- Obfuscation:
+  - Taking name of something legit ex.GoogleUpdate
+  - Abnormal for govt. device, such as Steam
+  - Misspellings of words
+  - Running from the wrong location such as Downloads
+
+Linux:
+- Cron
+  - /etc/crontab
+  - /var/spool/cron
+  - /etc/cron.d
+- /etc/rc[0-6].d (actual settings for runlevels)
+- /etc/profile
+- /etc/environment?
+- services/processes
+  - ps -elf
+  - top / htop
+  - systemctl status/start/stop
+2 Linux variations:
+- sysv
+  - /etc/init.d (SysV)
+  - /etc/inittab (specifies runlevels for Sysv)
+- systemd
+  - /lib/systemd/systemd (systemd)
+  - /usr/lib/systemd/system (systemd)
+
+Windows
+- Autoruns is SUPER HANDY ( net use http:/live.sysinternals.com - map to Z drive)
+- schtasks
+- registry locations
+  - HKLM:\(run)
+- powershell profiles (4 of them - allusersallhosts, alluserscurrenthost, currentuserallhosts, currentusercurrenthost in that order)
+  - to see if any profiles have been created, test-path -path $profile.[currentUsercurrentHost], and if there is actually a path for any of them, check it
+- services/processes
+  - get-process
+  - get-service
+  - get-ciminstance win32_service
+- artefacts (KNOW HOW TO LOOK AT THESE - windows auditing & logging)
+  - BAM
+  - Prefetch
+  - Userassist
+  - info left in a registry key

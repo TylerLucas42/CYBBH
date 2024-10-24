@@ -15,9 +15,10 @@ ALL:
 
 Linux:
 - Cron
-  - /etc/crontab
+  - cat /etc/crontab
   - ls /var/spool/cron
   - /etc/cron.d
+- cat .bash_logout (has scripts that execute on logout)
 - /etc/rc[0-6].d (actual settings for runlevels)
 - /etc/profile
 - /etc/environment?

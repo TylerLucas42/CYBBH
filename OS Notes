@@ -16,7 +16,7 @@ ALL:
 Linux:
 - Cron
   - /etc/crontab
-  - /var/spool/cron
+  - ls /var/spool/cron
   - /etc/cron.d
 - /etc/rc[0-6].d (actual settings for runlevels)
 - /etc/profile

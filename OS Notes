@@ -1,7 +1,7 @@
 
 Forms of Persistence
 
-Make sure to understand user things with regard to windows boot process (etc profile)
+Make sure to understand user things with regard to windows boot process
 
 file /run/systemd/system (if not exists, it's sysv)
 
@@ -17,11 +17,12 @@ Linux:
 - Cron
   - cat /etc/crontab
   - ls /var/spool/cron
-  - /etc/cron.d
+  - ls /etc/cron.d
 - cat .bash_logout (has scripts that execute on logout)
 - /etc/rc[0-6].d (actual settings for runlevels)
+- /etc/inittab (specifies runlevels)
 - /etc/profile
-- /etc/environment?
+- /etc/environment
 - services/processes
   - ps -elf
   - top / htop
@@ -29,7 +30,6 @@ Linux:
 2 Linux variations:
 - sysv
   - /etc/init.d (SysV)
-  - /etc/inittab (specifies runlevels for Sysv)
 - systemd
   - /lib/systemd/systemd (systemd)
   - /usr/lib/systemd/system (systemd)

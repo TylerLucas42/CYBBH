@@ -35,7 +35,7 @@ Linux:
   - /usr/lib/systemd/system (systemd)
 
 Windows
-- Autoruns is SUPER HANDY ( net use http:/live.sysinternals.com - map to Z drive)
+- Autoruns is SUPER HANDY ( net use * http:/live.sysinternals.com - map to Z drive)
 - schtasks
 - registry locations
   - HKLM:\(run)

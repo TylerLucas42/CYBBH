@@ -1,7 +1,13 @@
- 
+OSI Layers: http://networking-ctfd-2.server.vta:8000/osi
+
+Links:
+- https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml (IANA updated port number registry)
+- https://www.rfc-editor.org/rfc-index.html (great resource for best practices)
+- https://scapy.readthedocs.io/en/latest/introduction.html#what-makes-scapy-so-special (SCAPY is cool)
+- https://www.bgplookingglass.com/ (BGP AS database) or https://www.iana.org/assignments/as-numbers/as-numbers.xhtml (IANA AS database) or https://stat.ripe.net/special/bgplay (BGP visualizer)
 
 Section 1 (T,W): Network Fundamentals
-- https://www.rfc-editor.org/rfc-index.html (great resource for best practices)
+- 1 hex val = 1 nibble = 1/2 byte = 4 bits
 - Ethernet: IEEE 802.3, Wireless: IEEE 802.11, Token Ring: IEEE 802.5
 - Data Link: Level 2 OSI
         - Upper Level 2: LLC (Logical Link Control)
@@ -76,6 +82,151 @@ Section 1 (T,W): Network Fundamentals
         - Manually assign STP root
         - BPDU Guard
         - DHCP Snooping
+- Layer 3: Network
+- IPV4: Subnetting, NAT
+        - Classes: A (0-127), B (128-191), C (192-223), D/Multicasting (224-239), E/Unused (240-255), Broadcast (all host bits are set to 1)
+        - Loopback (127.0.0.0/8), Multicast (class D), Private (RFC 1918), Link-Local (APIPA), Public (everything else except class E)
+                - APIPA auto configuration: 169.254.0.0/16 (RFC 3927)
+                - DHCP auto configuration: DORA process (RFC 1531)
+        - Vulnerabilities of auto config: Rogue DHCP, Evil Twin (pretend to be the target DHCP server - same IP, same config, etc.), DHCP Starvation (overutilize DHCP IP addresses by requesting & reserving nonstop until there
+          are no more IP addresses available left to be assigned)
+        - IPV4 Header "Flags" section relates to fragmetation
+                - Fragmentation is performed by routers
+                - MF flag is on for all packets except the last (this indicates no further fragmented packets)
+                - Offset is on for all packets except the first (Offset = ((MTU - (IHL x 4)) / 8) ) (default MTU is 1500 bytes, IHL = internet header length, default 5
+                        - Note that IHL is measured in words, so IHL 5 must be multiplied by 4 to get the accurate value of 20 bytes
+        - Teardrop attack: Custom crafted fragmented packets, putting your data exactly where you want it in the frame instead of what should be there (knowing the offset is essential)
+        - IPV6 does not include fragmentation within the header. Fragmentation is done at the individual hosts rather than the router, and a separate header must be used
+        - If your firewall isn't smart enough to put together and detect malicious patterns across separate packets, you can include "mal" "icious" "code" in separate packets and reassemble once it's past the firewall
+- OS Fingerprinting based off TTL:
+        - TTL: UNIX = 64, Windows = 128, Cisco = 255
+        - TCP window size: UNIX = 5500-6000, Windows = 8192, Cisco = 4128, Windows XP/FreeBSD = 65535
+        - ICMPv4 size: UNIX = 64, Windows = 40
+- ICMPv4 Traceroute: ICMP (Windows default), UDP (Linux default), TCP
+        - Linux/UDP: [sudo] traceroute [-U] [-I] [-T] 172.16.82.106
+        - ICMPv4 attacks: Firewalking (taceroute), oversized ICMP packages that can crash the loader, ICMP redirects, SMURF attack, mapping out network with IP unreachables, ICMP covert channels
+- IPV6 Format: 128 bits / 16 bytes, in hex (XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX) (8 hextets: 64 bit prefix, 64 bit Int ID)
+        - 2001:0000:0000:0001:0000:0000:0000:0001 can be shortened to 2001:0:0:1::1 (0000 can be shortened to 0, and the longest string of those can be shortened to ::)
+        - IPv6 does NOT use broadcast, instead using anycast
+                - Global unicast addresses: 2000:/3
+                - Unique local: fc00::/7
+                - Loopback: ::1/128
+                - Link-Local: fe80::/10
+                - Multicast: f00::/8
+        - When setting up an IPv6 device for the first time (zero configuration), it assigns itself an IP (predetermined prefix, Int ID is set randomly for windows and by EUI-64 for UNIX/CISCO)
+                - EUI-64 is based on MAC address 7th bit flipped, meaning if you know the MAC you may be able to figure out the IP
+        - IPv6 zero configuration vulnerabilities: SLAAC MITM, can be used for fingerprinting, Rogue DHCP, Evil Twin, DHCP starvation
+- NDP (Neighbor Discovery Protocol):
+        - Type 133: Router Solicitation
+        - Type 134: Router Advertisement
+        - Type 135: Neighbor Solicitation
+        - Type 136: Neighbor Advertisement
+        - Type 137: Redirect
+- Routing Protocol Metrics:
+        - RIP: Hop (only works with classful routing, ie. carrying subnet mask info within routing updates)
+                - Classless routing supports CIDR/VLSM
+        - EIGRP: Bandwidth, Delay, Load, Reliability
+        - OSPF: Cost
+        - BGP: Policy (used for compatibility between different routing protocols)
+- Routing Protocols break OSI model, work on multiple levels incl. 2 & 3
+        - Routed (not routING) Protocols are routed by Routing Protocols
+        - Routing Protocol Vulnerabilities:
+        - Vulnerable to DDOS, Packet Mistreating Attacks (PMA), Routing Table Poisoning (RTP), Hit & Run DDOS (HAR), Persistent Attacks (PA)
+- BGP: Border Gateway Protocol
+        - Roadmap of the internet, relatively complicated setup and takes a way to set up & select paths
+        - Advertises IP CIDR address blocks
+        - Routes traffic between autonomous systems designated by ASN
+        - Selects routes with the fewest hops
+- BGP Hijacking:
+        - Illegitimate advertising of addresses (advertise someone else's IP block, get their traffic
+        - "Black holing" traffic, MITM, stealing prefixes, monitoring traffic, intercepting/modifying traffic, etc.
+        - Defend against this with IP prefix filtering, BGP hijacking detection via TTL/RTT, or BGPSec
+- Static routing: router(config)# ip route 192.168.1.0 255.255.255.0 144.1.1.2 g0/1
+        - Advantages of static routing: Doesn't send updates, no bandwidth used, minimal resources usage, data path pre-determined, good for small networks
+        - Disadvantages: time-consuming, prone to fatfingering, admin has to intervene during outages, scales badly for large networks
+- Dynamic Routing: 2 Types
+        - Exterior Gateway Protocols: BGP
+        - Interior Gateway Protocols: RIPv2 / EIGRP / OSPF / IS-IS
+        - Advantages: Easy to configure & maintain, no intervention needed, scales well
+        - Disadvantages: Consumes resources, updates can be intercepted, data path no predetermined
+- First Hop Redundancy Protocols: HSRP / VRRP / GLBP 
+        - Basically, designate a single way out and designate other redundant routes that be used to send packets out in case the primary gateway goes down
+        - FHRP Attack: Intercept FHRP message exchange, inject manipulated messages, MITM by becoming active forwarder
+LAYER 4: TRANSPORT LAYER
+- Port Ranges: 0-1023 (well-known/system), 1024-49151 (registered/user), 49152-65535 (dynamic/private)
+- TCP Flags: 1 Byte
+LAYER 5
+- Very common layer 5 protocol: VPN (Virtual Private Network)
+        - Not encrypted by default
+        - Creates a tunnel through public space to get inside a private network and act as if your IP is a private address within that network
+        - 2 Types of VPNs:
+                - Remote Access (client-to-site, bypasses firewalls to come directly into a network as if you are on that network)
+                - Site-to-Site (geographically virtually locate yourself in another part of the world)
+        - IPSEC: Internet Protocol Security (VPN standard that includes encryption and is publicly available)
+                - 2 Modes: Transport Mode (client-to-site, payload encrypted end-to-end) / Tunnel Mode (site-to-site, payload encrypted router-to-router)
+- Proxy: Intermediary with authority to view traffic and forward it to others
+        - For example, if you are outside a network and want to send something to a private network, send it to a proxy that can send it to the destination
+- Client-Server Exchange Protocols:
+        - SOCKS4: no authentication, only IPv4, no UDP support, no proxies
+        - SOCKS5: authenticated, IPv4 and IPv6 support, UDP support, supports proxy binding
+        - NETBIOS: TCP 139 / UDP 137/138, used for name resolution (largely replaced by DNS)
+                - SMB (incl. CIFS/SAMBA): Rides over NETBIOS. Datagram Service - UDP 138 / Session Service - TCP 139
+        - RPC: Any port, allows program to execute a request on a remote computer. Hides network complexities, incl. XML/JSON/SOAP/gRPC
+        - API: NOT A PROTOCOL, but often used on networks on layer 5 as a framework of rules/protocols for software components to interact (methods, parameters, data formats, etc.)
+LAYER 6: TRANSLATION LAYER
+- Includes translation, formatting, encoding (ASCII/HEX/BASE64/EBCDIC), encryption (symmetric/asymmetric), compression
+- If it involves a file extension, probably takes place at layer 6
+LAYER 7: APPLICATION
+- TCP 23: Telnet (remote login/authentication, CLEAR TEXT meaning unencrypted and susceptible to interception)
+- TCP 22: SSH. Like Telnet, but encrypted (asymmetric encryption for key exchange, symmetric for actual session). Also provides data stream channeling.
+        - SSH Architecture components: Client, server, session, user key (asymmetric public), host/server key (asymmetric public), session key (symmetric, protects session data)
+        - Issues: password is only means of authentication
+        - On initial SSH host connection, it tells you host fingerprint key's SHA256 hash. If this does not match key saved in /home/student.ssh/known_hosts, SOMETHING IS WRONG and you can say "no" and not connect
+                - If remote host key changes, Linux will give you a crazy WARNING @@@ SOMEONE COULD BE EAVESDROPPING!! message notifying you of MITM risks
+                        - If this is legit and they literally just changed the key, make it go away by removing the host key from the known_hosts file by the following command:
+                          ssh-keygen -f "/home/student/.ssh/known_hosts" -R "172.16.82.106"
+        - Current ssh port is found via "cat /etc/ssh/sshd_config | grep Port"
+        - Set SSH port via "sudo nano /etc/ssh/sshd_config" and restart SSH service via "systemctl restart ssh"
+        - Create your own SSH public/private key via "ssh-keygen -t rsa -b 4096 -C "Student"
+                -t = Encryption (rsa|dsa|ecdsa|ed25519)
+                -b = Bit length (1024|2048|4096)
+                - stored in ~/.ssh/id_rsa and ~/.ssh/id_rsa.pub
+        - "ssh-copy-id student@172.16.82.106" copies SSH public key to remote server, saves key to ~.ssh/authorized_keys on remote server, allows you to authenticate using your key instead of password
+- TCP 80: HTTP
+        - User Request methods: GET / HEAD / POST / PUT 
+- TCP 443: HTTPS
+        - Vulnerabilities (both HTTP & HTTPS): Flooding, amplification, low and slow, drive-by downloads, BeEF Framework
+- TCP/UDP 53: DNS (Domain Name Service, resolves names to IPs)
+        - UDP 53: Queries & responses
+        - TCP 53: DNS zone transfers, DNS security
+        - DNS Records: A (IPv4), AAAA (IPv6), MX (mail server), TXT (readable text), NS (name server), SOA (start of authority)
+- TCP 20/21: FTP (File Transfer Protocol, 2 modes - active & passive. Clear text. May be authenticated or anonymous)
+        - TCP 20: Data transfer
+        - TCP 21: Control
+        - FTP Active issues: NAT, firewall traversal, SSH tunneling issues (Passive FTP solves most of these issues and is most used in modern systems)
+- UDP 69: TFTP (Trivial FTP - clear text, used by routers/switches to transfer IOS & config files)
+- TCP 25: SMTP (Simple Mail Transfer Protocol - sends emails, no encryption)
+        - TCP 465/587: SMTP over SSL/TLS ie. SMTPS
+- TCP 110: POP (receives email, no encryption, no server sync. old. POP3)
+- TCP 143: IMAP (receives email, no encryption, syncs w/server. IMAP4)
+- UDO 67/68: DHCP (Dynamic Host Configuration Protocol)
+        - DHCPv4 uses DORA - Discover (Broadcast), Offer (Unicast), Request (Broadcast), Acknowledge (Unicast)
+        - DHCPv6 uses SARR (if managed flag is set during SLAAC) - Solicit (Multicast), Advertise (Unicast), Request (Multicast), Reply (Unicast)
+        - DHCP vulnerabilities: Rogue DHCP, Evil Twin, DHCP Starvation
+- UDP 123: NTP (Network Time Protocol - synchronizes system clocks based on 0-15 stratum levels. 0 is the authoritative time source. a lot of services stop working if the time is too out of sync)
+- TCP 49: TACACS (Terminal Access Controller Access-Control System - controls access to network devices/resources through centralized server)
+- AAA Protocols: Authentication, Authorization, and Accounting (for third party authentication)
+- UDP 1645/1646 & 1812/1813: RADIUS (AAA protocol)
+- TCP 3836: DIAMETER (more advanced version of radius)
+- UDP 161/162: SNMP (Simple Network Management Protocol)
+        - 7 message types: Get Request, Set Request, Get Next, Get Bulk, Response, Trap, Inform
+        - Vulnerabilities: Weak community strings, lack of encryption, info disclosure, can be sniffed
+- UDP 1023+: RTP (Real-Time Transfer Protocol - video streaming)
+- TCP 3389: RDP (Remote Desktop Protocol - like SSH but with GUI, developed by and works only on Windows)
+- UDP 88: KERBEROS (used by AD - clients obtain tickets to access services)
+- TCP 389/636: LDAP (Lightweight Directory Access Protocol - an easier way to access AD stuff. secure and unsecure versions)
+
+
 
 Section 2 (Th): Socket Creation and Packet Manipulation
 

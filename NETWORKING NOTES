@@ -4,7 +4,7 @@ Section 1 (T,W): Network Fundamentals
 - https://www.rfc-editor.org/rfc-index.html (great resource for best practices)
 - Ethernet: IEEE 802.3, Wireless: IEEE 802.11, Token Ring: IEEE 802.5
 - Data Link: Level 2 OSI
-
+        - Higher
 
 
 Section 2 (Th): Socket Creation and Packet Manipulation

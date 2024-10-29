@@ -22,7 +22,60 @@ Section 1 (T,W): Network Fundamentals
         - Multicast: One to many (8th bit is on)
         - Broadcast: One to all (FF:FF:FF:FF:FF:FF - all bits on)
 - MAC Header Ethertypes: 0x0800 (IPv4), 0x86DD (IPv6), 0x0806 (ARP), 0x08100 (VLAN Tag)
-
+- VLAN Types
+        - Default: VLAN 1
+        - Data - User traffic
+        - Voice - VOIP traffic
+        - Management - Switch & Router Mgmt
+        - Native - Untagged switch & router traffic
+- VLAN Hopping Attack: also known as double tagging
+        - Since VLAN tag is 1 by default, send a VLAN tag of 1 and then send a second frame with a VLAN tag of 20 (or whatever tag your valuable VLAN system is)
+- ARP Types:
+        - ARP (OP 1 & 2)
+        - RARP (OP 3 & 4)
+        - Proxy ARP (OP 2)
+        - Gratuitous ARP (OP 2)
+- ARP Cache: Includes all resolved MAC to IP resolutions (note: can be easily duped by attackers. also, ARP cache is very volatile, only lasts 20 mins at most)
+        - ARP MITM attack: Poison ARP Cache with Gratuitous ARP or Proxy ARP (very simple code - https://git.cybbh.space/net/public/-/raw/master/modules/networking/activities/resources/arp_mitm.adoc)
+- VTP: VLAN Trunking Protocol: Cisco proprietary, enables dynamically adding/removing/modifying VLANs
+        - VTP domain is a group of switches with the same VTP config & VLAN info
+        - VTP Modes: Server, client, transparent (transparent ties into the VTP domain but retains independent configurations - "pretend I'm not here")
+        - VTP vulnerability: Can cause switches to dump all VLAN info, cauing a DOS as switch will not support configured VLANs
+                - If you have multiple servers on the VTP, the server with the most revisions/updates gets priority. Might accidentally push a bunch of updates to an old server, then accidentally override the whole VLAN
+                  config with bogus nonsense from the old server you don't store the modern VTP config on
+- DTP: Dynamic Trunking Protocol: Cisco proprietary, enables dynamically creating trunk links
+        - DTP Modes: Dynamic-Auto (If no trunks in sight, assumes it's an access/user port), Dynamic-Desirable (assumes it's a trunk port)
+        - DTP vulnerability: DTP is on by default. If you don't realize this, you might connect to another switch, the outside switch has dynamic-desirable and automatically assigns a trunk connected to your VLAN and now
+          has access to your whole network (TURN OFF DTP)
+- Means of figuring out trunking protocols & how crap is set up:
+        - Cisco Discovery Protocol (CDP), Foundry Discovery Protocol (FDP), Link Layer Discovery Protocol (LLDP)
+        - Note: These send out valuable info across the whole local net, enabled by default
+                - You can disable it globally or per interface
+- STP: Spanning Tree Protocol
+        - In a network with a bunch of switches all connected to each other, STP automatically configures and designates ports such that all switches have the fastest route to the root bridge switch and don't send
+          their crap to all the other switches when they don't need to        
+        - Root Decision Process:
+                1. Elect root bridge
+                2. Identify root ports on non-root pridge
+                3. Identify the designated port for each segment
+                4. Set alternate ports to blocking state
+        - Port types:
+                - R/Root: one per switch, default gateway
+                - D/Designated: Can receive frames
+                - B/Blocked: Don't receive frames
+- Spanning Tree Attack: Craft a BPDU (bridge protocol data unit) to say "I am the bridge" or designate root as a blocked port to mess with stuff
+- Port Security Modes: Helps restrict unauthorized access, prevents CAM overflow atttacks by limiting # of MACs learned on each port
+        - Shutdown (default - first device plugged into a port is good to go, but if it detects a different, new device plugged into that same port, it will shutdown and require admin to restore the port)
+        - Protect (will allow but log different device)
+        - Restrict (will block traffic from the new device but not shutdown outright)
+        - NOTE: port security can be bypassed by spoofing MACs
+- LAYER 2 ATTACK MITIGATION BEST PRACTICES:
+        - Shut down unused ports
+        - Enable port security
+        - IP source guard
+        - Manually assign STP root
+        - BPDU Guard
+        - DHCP Snooping
 
 Section 2 (Th): Socket Creation and Packet Manipulation
 

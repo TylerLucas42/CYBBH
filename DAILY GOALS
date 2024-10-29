@@ -1,9 +1,12 @@
 
+Local Network: https://net.cybbh.io/public/networking/latest/index.html
+Openstack Floating IPs: https://net.cybbh.io/public/networking/latest/floating-ip.html (do not scan the floating network, makes no sense. floating network is what connects you to internal shit)
+
 DAILY GOALS:
-1. Complete daily notes (https://net.cybbh.io/public/networking/latest/01_data/fg.html)
-2. Complete 70% CTFs (http://10.50.23.214:8000/challenges)
+1. Complete daily notes (https://net.cybbh.io/public/networking/latest/01_data/fg.html) (DONE TUES)
+2. Complete 70% CTFs (http://10.50.23.214:8000/challenges) (DONE TUES)
 3. Complete video of the day (http://10.50.23.214:8000/videos
-4. At minimum, check out resources (http://10.50.23.214:8000/resources)
+4. At minimum, check out resources (http://10.50.23.214:8000/resources) (DONE SECTION 1)
 
 
 CTF Progress: 70%

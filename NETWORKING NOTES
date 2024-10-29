@@ -4,7 +4,24 @@ Section 1 (T,W): Network Fundamentals
 - https://www.rfc-editor.org/rfc-index.html (great resource for best practices)
 - Ethernet: IEEE 802.3, Wireless: IEEE 802.11, Token Ring: IEEE 802.5
 - Data Link: Level 2 OSI
-        - Higher
+        - Upper Level 2: LLC (Logical Link Control)
+        - Lower Level 2: MAC (Media Access Control)
+- Switch operation modes:
+        - Cut-through: Tells switch to fast-forward: just look at destination, ignore all other bits and simply forward to dest user. (fastest)
+        - Fragment-free: Looks at first 64 bytes of eth frame to decide what to do with the frame
+        - Store-and-forward: Checks packet thoroughly, verify and forward it out once the entire frame is received and good to go (slowest)
+- CAM Table Overflow/MAC Attack: DOS. Fill CAM tale with spoofed MAC entries, traffic from all further MACs once the CAM table is full will be flooded out on all ports and cause chaos
+        - This works because modern software can spoof MACs, as opposed to in the past when MACs were burned-in only
+- MAC Formatting (48 bytes)
+        - XXXXXX: OUI - Assigned by IANA (24 bytes)
+        - YYYYYY: NIC - Assigned by vendor (unique to each device - 24 bytes)
+        - Windows: XX-XX-XX-YY-YY-YY
+        - UNIX: XX:XX:XX:YY:YY:YY
+        - Cisco: XXXX.XXYY.YYYY
+        - Unicast: One to one (8th bit is on)
+        - Multicast: One to many (8th bit is on)
+        - Broadcast: One to all (FF:FF:FF:FF:FF:FF - all bits on)
+- MAC Header Ethertypes: 0x0800 (IPv4), 0x86DD (IPv6), 0x0806 (ARP), 0x08100 (VLAN Tag)
 
 
 Section 2 (Th): Socket Creation and Packet Manipulation

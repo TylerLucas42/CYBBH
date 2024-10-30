@@ -2,10 +2,18 @@
 Local Network: https://net.cybbh.io/public/networking/latest/index.html
 Openstack Floating IPs: https://net.cybbh.io/public/networking/latest/floating-ip.html (do not scan the floating network, makes no sense. floating network is what connects you to internal shit)
 
+COMMAND: tcpdump -n "filter syntax" -r ~/BPFCheck.pcap | wc -l
+
+IH Creds:
+Student#: student8
+Command: ssh student@10.50.31.160 -X
+Password: password
+Internal IP: 10.10.0.40 (use tcpdump, tshark, wireshark, scapy and google) (t1 & t2: both packet-headers.pcapng, t3: BPFCheck.pcap)
+
 DAILY GOALS:
-1. Complete daily notes (https://net.cybbh.io/public/networking/latest/01_data/fg.html) (DONE TUES)
-2. Complete 70% CTFs (http://10.50.23.214:8000/challenges) (DONE TUES)
-3. Complete video of the day (http://10.50.23.214:8000/videos)
+1. Complete daily notes (https://net.cybbh.io/public/networking/latest/01_data/fg.html) (not done)
+2. Complete 70% CTFs (http://10.50.23.214:8000/challenges) (not done)
+3. Complete video of the day (http://10.50.23.214:8000/videos) (done Tues - 4)
 4. At minimum, check out resources (http://10.50.23.214:8000/resources) (DONE SECTION 1)
 WRITE DOWN SLACK INFO
 
@@ -13,8 +21,7 @@ WRITE DOWN SLACK INFO
 CTF Progress: 70%
 - Current: 0% (UNSAT)
 Video Progress: 1 per day
-- M: NOT DONE
-- T: 
+- T: DONE 4
 - W: 
 - Th: 
 - F: 
@@ -27,7 +34,7 @@ Exam Grade (50%): ?
 
 Total: 0 / 1659 / 2370
 
-Section 1 (T,W): 0 / 483 / 690
+Section 1 (T,W): 300 / 483 / 690
 Section 2 (Th): 0 / 56 / 80
 Section 3 (F): 0 / 238 / 355
 Section 4 (M,T,W): 0 / 250 / 355

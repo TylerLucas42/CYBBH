@@ -270,6 +270,7 @@ DAY 2: TRAFFIC CAPTURE
         - Expressions may be more of a headache but do allow much more precision & complexity
 - BPF Construction: 
         - Filters are set using the SO_ATTACH_fILTER (allows us to attach a BPD to the socket to capture incoming packets)
+        - COMMAND SYNTAX: tcpdump -n "" -r ~/BPFCheck.pcap ( "| wc -l" for # of packets)
         - BPF Syntax: "tcpdump {A} [B:C] {D} {E} {F} {G}", where
                 - A = Protocol (ether | arp | ip | ip6 | icmp | tcp | udp)
                 - B = Header Byte offset
@@ -299,14 +300,16 @@ DAY 2: TRAFFIC CAPTURE
                 - 'ether[12:2] = 0x8100 && ether[16:2] = 0x8100' (search for double VLAN Tag)
                 - 'ip[0] & 15 > 5' (search for IHL greater than 5)
                 - 'ip[1] & 0xfc = 0x40' or 'ip[1] & 252 = 64' or 'ip[1] & 252 = 64' (search for IPv4 DSCP value of 16)
-                - 'ip6[0:2] & 0x0ff0 != 0' (search for traffic class in IPv6 having a value
-                - 'ip[6] & 0xE0 = 0x80' or 'ip[6] & 224 = 128' (search for ONLY the RES flag set
-                - 'ip[6] & 0x80 = 0x80' or 'ip[6] & 128 = 128' (search for RES bit set, disregarding whether other flags are on or off)
+                - 'ip6[0:2] & 0x0ff0 != 0' (search for traffic class in IPv6 having a value)
+                - Set ONLY a specific flag to be set // a specific flag to be set, inclusive of other flags
+                        - RES: 'ip[6] & 0xE0 = 0x80' or 'ip[6] & 224 = 128' // 'ip[6] & 0x80 = 0x80' or 'ip[6] & 128 = 128'
+                        - DF: 'ip[6] & 0xE0 = 0x40' or 'ip[6] & 224 = 64' // 'ip[6] & 0x40 = 0x40' or 'ip[6] & 0x40 = 0x40'
+                        - MF: 'ip[6] & 0xE0 = 0x20' or 'ip[6] & 224 = 32' // 'ip[6] & 0x20 = 0x20' or 'ip[6] & 32 = 32'
                 - 'ip[6:2] & 0x1fff > 0' or 'ip[6:2] & 8191 > 0' (search for offset field having any nonzero value)
                 - 'ip[6] & 0x20 = 0x20 || ip[6:2] & 0x1fff > 0' or 'ip[6] & 32 = 32 || ip[6:2] & 8191 > 0' (search for MF set or offset having nonzero value)
                 - 'ip[8] = 128' (v4) or 'ip6[7] >= 128' (v6) (search for TTL in ipv4/6 packet)
-                - 'ip[9] = 0x01' or 'ip[9] = 0x06' or 'ip[9] = 0x11' search for ICMPv4, TCP, or IDP encapsulated within IPv4 packet)
-                - 'ip6[6] = 0x3A' or 'ip6[6] = 0x06' or 'ip6[6] = 0x11' (search for ICMPv6, TCP, or IDP encapsulated within IPv6 packet)
+                - 'ip[9] = 0x01' or 'ip[9] = 0x06' or 'ip[9] = 0x11' search for ICMPv4, TCP, or UDP encapsulated within IPv4 packet, respectively)
+                - 'ip6[6] = 0x3A' or 'ip6[6] = 0x06' or 'ip6[6] = 0x11' (search for ICMPv6, TCP, or UDP encapsulated within IPv6 packet, respectively
                 - 'ip[12:4] = 0x0a010101' or 'ip[16:4] = 0x0a010101' (search for IPv4 src or dst address of 10.1.1.1)
                 - 'ip6[8:2] = 0xfe80' or 'ip6[24:2] = 0xfe80' (search for IPv6 src or dst address starting with FE80)
                 - 'tcp[0:2] = 3389' (TCP src port 3389) or 'tcp[2:2] = 3389' (TCP dst port 3389) or 'tcp[0:2] = 0x0d3d || tcp[2:2] = 0x0d3d' (either)

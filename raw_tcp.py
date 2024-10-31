@@ -1,4 +1,3 @@
-----
 #!/usr/bin/python3
 # For building the socket
 import socket

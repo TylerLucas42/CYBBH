@@ -338,7 +338,62 @@ DAY 2: TRAFFIC CAPTURE
 
 
 
-Section 2 (Th): Socket Creation and Packet Manipulation
+Section 2 (Th): Socket Creation and Packet Manipulation (2 categories: User/Kernel, 3 types: Stream/Datagram/RAW)
+- User Space Sockets (Stream/Datagram):
+        - Using tcpdump or wireshark to read a file
+        - Using nmap with no switches
+        - Using netcat to connect to a listener
+        - Using netcat to create a listener above the well known port range (1024+)
+        - Using /dev/tcp or /dev/udp to transmit data
+- Kernel Space Sockets (RAW):
+        - Using tcpdump or wireshark to capture packets on the wire
+        - Using nmap for OS identification or to set specific flags when scanning
+        - Using netcat to create a listener in the well known port range (0 - 1023)
+        - Using Scapy to craft or modify a packet for transmission
+        - Using Python to craft or modify RAW Sockets for transmission
+        - Network devices using routing protocols such as OSPF
+        - Any Traffic without Transport Header (ICMP)
+- Stream Sockets: TCP, SCTP, Bluetooth. Methods for connection establishment and teardown.
+- Datagram Sockets: UDP. Connectionless, fast.
+- RAW Sockets: IP. Sends/receives IP packets without layer 4 protocol-specific formatting.
+        - RAW = Kernel Space socket, ie. attempts to access hardware directly and thus requires elevated privileges
+Python
+- Python Terminology/Structure:
+        - Libraries (incl. Standard Python Library)
+                - Modules (_import {module} / import {module} as {custom name} / from {module} import {function / *} / from {module} import {function} as {custom name})
+                        - Functions (module.function)
+                        - Exceptions (try:)
+                        - Constants (AF_INET)
+                        - Objects ()
+- Python Libraries: Socket, Errors, Struct, Exceptions, Sys
+- Python Socket Commands: from socket import *
+        - s = socket.socket(socket.FAMILY, socket.TYPE, socket.PROTOCOL)
+                - family: AF_INET*, AF_INET6, AF_UNIX
+                - type: SOCK_STREAM*, SOCK_DGRAM, SOCK_RAW
+                - proto: 0*, IPPROTO_TCP, IPPROTO_UDP, IPPROTO_IP, IPPROTO_ICMP, IPPROTO_RAW
+- RAW sockets are more difficult to craft and thus should only be used under specific use cases:
+        - Testing specific defense mechanisms - such as triggering and IDS for an effect, or filtering
+        - Avoiding defense mechanisms
+        - Obfuscating data during transfer
+        - Manually crafting a packet with the chosen data in header fields
+        - NOTE: must include IP header & next headers, and see RFC 791 for specific details on how to construct an IPv4 header
+Encoding/Decoding (UTF-8, Base64, Hex, etc.)
+- Encoding: The process of taking bits and converting them using a specified cipher (NOT encryption - encryption uses a secret key to scramble data)
+- Decoding: Reverse of the conversion process used by the specified cipher for encoding
+- Python text -> hex encoding: echo "Message" | xxd
+- Python file -> hex encoding: xxd file.txt file-encoded.txt
+- Python hex file -> text decoding: xxd -r file-encoded.txt file-decoded.txt
+- Python Hex Encoding:
+        import binascii
+        message = b'Message'
+        hidden_msg = binascii.hexlify(message)
+- Python text -> base64 encoding: echo "Message" | base64
+- Python file -> base64 encoding: base64 file.txt > file-encoded.txt
+- Python base64 file -> text decoding: base64 -d file-encoded.txt > file-decoded.txt
+- Python Base64 Encoding: 
+        import base64
+        message = b'Message'
+        hidden_msg = base64.b64encode(message)
 
 
 

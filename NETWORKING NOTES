@@ -357,7 +357,7 @@ Section 2 (Th): Socket Creation and Packet Manipulation (2 categories: User/Kern
 - Datagram Sockets: UDP. Connectionless, fast.
 - RAW Sockets: IP. Sends/receives IP packets without layer 4 protocol-specific formatting.
         - RAW = Kernel Space socket, ie. attempts to access hardware directly and thus requires elevated privileges
-Python
+Python Socket Programming
 - Python Terminology/Structure:
         - Libraries (incl. Standard Python Library)
                 - Modules (_import {module} / import {module} as {custom name} / from {module} import {function / *} / from {module} import {function} as {custom name})

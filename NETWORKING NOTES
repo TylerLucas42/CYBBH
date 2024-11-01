@@ -512,7 +512,7 @@ PASSIVE INTERNAL
         - Windows: tasklist
         - Linux: ps or top
                 - ps -elf: -e (all running), -l (long format), -f (full format)
-- Command path: which / whereis
+- Command path: which / whereis (whereis is better - will usually show not only binary but also sbin location, location of config file, and location of documentation file)
 - Routing table:
         - Windows: route print
         - Linux: ip route (netstat -r deprecated)

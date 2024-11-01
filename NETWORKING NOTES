@@ -5,6 +5,9 @@ Links:
 - https://www.rfc-editor.org/rfc-index.html (great resource for best practices)
 - https://scapy.readthedocs.io/en/latest/introduction.html#what-makes-scapy-so-special (SCAPY is cool)
 - https://www.bgplookingglass.com/ (BGP AS database) or https://www.iana.org/assignments/as-numbers/as-numbers.xhtml (IANA AS database) or https://stat.ripe.net/special/bgplay (BGP visualizer)
+- https://yasoob.me/2013/07/30/20-python-libraries-you-cant-live-without/ (awesome Python libraries)
+- https://docs.vyos.io/en/latest/cli.html (VyOS CLI)
+- https://stationx-public-download.s3.us-west-2.amazonaws.com/nmap_cheet_sheet_v7.pdf / https://usermanual.wiki/Pdf/nmapquickreferenceguide.1045482188/view (NMAP cheat sheet)
 
 Section 1 (T,W): Network Fundamentals
 - 1 hex val = 1 nibble = 1/2 byte = 4 bits

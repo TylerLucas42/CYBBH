@@ -398,7 +398,146 @@ Encoding/Decoding (UTF-8, Base64, Hex, etc.)
 
 
 Section 3 (F): Network Recconaisance
-
+- 4 Reconnaissance Stages: Passive External, Active External, Passive Internal, Active Internal
+        - Always start with passive since it's less intrusive and less likely to be caught
+- 4 Reconnaissance Steps: Network Footprinting, Network Scanning, Network Enumeration, Vulnerability Assessment
+        1. Network Footprinting: Collect information relating to target network, target systems, target organization (passive external)
+        2. Network Scanning: Port scanning, network scanning, vulnerability scanning (active external)
+        3. Network Enumeration: Network resources/shares, users, groups, routing tables, auditing/service settings, applications, banners, SNMP/DNS details, machine names, etc.
+        4. Vulnerability Assessment: Injection, broken authentication, sensitive data exposure, XML external entities, broken access control, known vulnerabilities, security misconfigs
+PASSIVE EXTERNAL
+- Info on passive info methods: https://osintframework.com/, http://www.pentest-standard.org/index.php/Intelligence_Gathering, https://www.securitysift.com/passive-reconnaissance/
+        - OSINT
+        - PAI (publicly available information)
+        - Identifying people, external/3rd party sites, technologies, content of interest, vulnerabilities
+- DNS Lookups: arin.net, whois.domaintools.com, viewdns.info, dnsdumpster.com, centralops.net
+- URL Scan: sitereport.netcraft.com, web-check.xyz, web-check.as93.net, urlscan.io
+- IP addresses & subdomains (IP registries: https://www.iana.org/assignments/ipv4-address-space/ipv4-address-space.xhtml
+                                            https://www.iana.org/assignments/ipv6-unicast-address-assignments/ipv6-unicast-address-assignments.xhtml)
+- IP GeoLocation lookup: maxmind.com, iplocation.io, iplocation.net, infosniper.net
+- BGP Prefixes: bgpview.io, hackertarget.com, bgp.he.net, bgp4.as
+- Identifying External/3rd Party Sites: look at parent/subordinate organizations, major clients/customers, services organizations, partners
+- Identifying People: look at target website, crawler tools like Maltego or Creepy, search engines, social media, job portals, tracking emails, family tree
+- Identifying technologies:
+        - File extensions, job listing (.js implies they hire JavaScript developers and implement scripting, as would LinkedIn job listings for JS developers)
+        - Server responses (https://websiteguidelines.com/guides/different-types-of-web-servers/)
+        - MAC OUI lookup (macaddress.io)
+        - Shodan.io (REALLY good for looking at literally all default/unsecured IoT devices in the world)
+        - Google Hacking (https://gist.github.com/sundowndev/283efaddbcf896ab405488330d1bbc06)
+        - Website content (https://dorik.com/blog/how-to-tell-what-website-builder-was-used)
+- Content of Interest: /etc/passwd, /etc/shadow, SAM database, config files, log files, backup files, test pages, client-side code
+- Vulnerabilities: Known technologies, error message responses, running services, running OS, monitoring of running applications
+- DNS service:
+        - Dig: queries DNS server over UDP 53 (name to IP records)
+                - dig zonetransfer.me {A / AAAA / MX / TXT / NS / SOA}
+        - Whois: queries DNS registrar over TCP port 43 (info about the owner who registered the domain)
+                - whois zonetransfer.me
+        - Zone transfer: TCP port 53
+                - dir axfr {@soa.server} {target-site}
+                - dig axfr @nsztm1.digi.ninja zonetransfer.me (see https://digi.ninja/projects/zonetransferme.php)
+        - Netcraft: similar to whois but web-based (https://sitereport.netcraft.com/)
+        - Wayback Machine: historical content (https://sitereport.netcraft.com/)
+        - Advanced Google searches:
+                - site:*.ccboe.net
+                - site:*.ccboe.net "administrator"
+                - Dork Search (https://dorksearch.com/, https://gist.github.com/sundowndev/283efaddbcf896ab405488330d1bbc06)
+        - Shodan: a search engine for internet-connected devices (https://www.shodan.io)
+- Passive OS Fingerprinting (P0F): passive scanning of network traffic & packet captures
+        - P0F can guess OS & version as well as client/server application & version
+        - more /etc/p0f/p0f.fp
+        - sudo p0f -i eth0
+        - sudo p0f -r test.pcap
+- Social Tactics: 
+        - Social Engineering
+        - Email/SMS/Bluetooth
+        - Shoulder Surfing/Dumpster Diving
+ACTIVE EXTERNAL
+- 2 Scanning Natures: Active / Passive
+- 4 Scanning Strategies: Remote to Local, Local to Remote, Local to Local, Remote to Remote
+- 2 Scanning Aim ranges: Wide range target scan / Target specific scan
+- 4 Scanning Methods: Single sources scan (1-to-1 or 1-to-many) / Distributed scan (many-to-one or many-to-many)
+- Vertical scan: Scan some (or all) ports on a single target
+- Horizontal scan: Scan a single port across multiple targets
+- Strobe scan: Scan a predefined subset of ports on a range of targets (in a distributed strobe scan, each source does a horizontal scan on different ports)
+- Block scan: Scan all (or a range of) ports on a range of targets
+- Ping: ping 172.16.82.106 -c 1
+- Ping sweep: for i in {1..254}; do (ping -c 1 172.16.82.$i | grep "bytes from" &) ; done
+- Nmap: scans 1000 most commonly used TCP/UDP ports by default.
+        - User: TCP Full Connect Scan (-sT) / Root: TCP SYN Scan (-sS)
+        - Nmap port states: open, closed, filtered, unfiltered, open|filtered, closed|filtered
+        - Nmap scan types: Broadcast Ping/Ping sweep (-sP, -PE), SYN scan (-sS), Full connect scan (-sT), Null scan (-sN), FIN scan (-sF), XMAS tree scan (-sX), UDP scan (-sU),
+          Idle scan (-sI), Decoy scan (-D), ACK/Window scan (-sA), RPC scan (-sR), FTP scan (-b), OS fingerprinting scan (-O), Version scan (-sV)
+        - Nmap options: ICMP ping (-PE), No ping (-Pn), Timeout levels (-T{0-5}) (ranges from T0 "Paranoid" at 300s to T5 "Insane" at 250ms)
+        - Nmap scan delay: Minimum delay between probes (--scan-delay <time>), Max delay between probes (--max-scan-delay <time>)
+        - Nmap rate limit: Minimum packets per second (--min-rate <number>), Max packets per second (--max-rate <number>)
+- Traceroute ("Firewalking")
+        - traceroute 172.16.82.106
+        - sudo traceroute 172.16.82.106 -T -p 443
+- Netcat: nc [Options] [Target IP] [Target Port(s)]
+        - Netcat options: Port scanning mode (-z), verbose (-v / -vv), -n (don't resolve IPs), -w1 (set timeout value to 1), -u (use UDP)
+        - Horizontal Scanning:
+                - TCP: for i in {1..254}; do nc -nvzw1 172.16.82.$i 20-23 80 2>&1 & done | grep -E 'succ|open'
+                - UDP: for i in {1..254}; do nc -nuvzw1 172.16.82.$i 1000-2000 2>&1 & done | grep -E 'succ|open'
+        - Vertical Scanning:
+                - TCP: nc -nzvw1 172.16.82.106 21-23 80 2>&1 | grep -E 'succ|open'
+                - UDP: c -nuzvw1 172.16.82.106 1000-2000 2>&1 | grep -E 'succ|open'
+        - Banner Grabbing: find out what is running on a particular port (-u to switch to udp port)
+                - nc -u 172.16.82.106 53
+- Curl/Wget: used to interact with the http, https and ftp protocols
+        - Curl: Displays ASCII (curl {ftp / http / https}://172.16.82.106)
+        - Wget: Downloads (wget -r {ftp / http / https}://172.16.82.106)
+PASSIVE INTERNAL
+- Packet Sniffers: Wireshark, tcpdump, p0f (limited to traffic in same local area of network)
+- IP configuration:
+        - Windows: ipconfig /all
+        - Linux: ip address (ifconfig depreciated)
+        - VyOS: show interface
+- DNS configuration:
+        - Windows: ipconfig /displaydns
+        - Linux: cat /etc/resolv.conf
+- ARP cache:
+        - Windows: arp -a
+        - Linux: ip neighbor (arp -a depreciated)
+- Network connections:
+        - Windows: netstat
+        - Linux: ss (netstat depreciated)
+        - Options (both netstat and ss): a (displays all active connections/ports), n (show port#), t (tcp only), u (udp only), p (shows which processes use which sockets)
+- Servces file:
+        - Windows: %SystemRoot%\system32\drivers\etc\services
+        - Linux/Unix: /etc/services
+- OS information:
+        - Windows: systeminfo
+        - Linux: uname -a and /etc/os-release
+- Running processes:
+        - Windows: tasklist
+        - Linux: ps or top
+                - ps -elf: -e (all running), -l (long format), -f (full format)
+- Command path: which / whereis
+- Routing table:
+        - Windows: route print
+        - Linux: ip route (netstat -r deprecated)
+        - VyOS: show ip route
+- File search:
+        - find / -name hint* 2> /dev/null
+        - find / -iname flag* 2> /dev/null
+- SSH config:
+        - Windows: C:\Windows\System32\OpenSSH\sshd_config
+        - Linux: /etc/ssh/sshd_config
+ACTIVE INTERNAL:
+- Similar tools & methods as active external recon
+- ARP scanning:
+        arp-scan --interface=eth0 --localnet
+        nmap -sP -PR 172.16.82.96/27
+- Ping scanning:
+        ping -c 1 172.16.82.106
+        for i in {1..254}; do (ping -c 1 172.16.82.$i | grep "bytes from" &) ; done
+        sudo nmap -sP 172.16.82.96/27
+- Dev TCP banner grap: exec 3<>/dev/tcp/172.16.82.106/22; echo -e "" >&3; cat <&3
+- Dev TCP scanning: for p in {1..1023}; do(echo >/dev/tcp/172.16.82.106/$p) >/dev/null 2>&1 && echo "$p open"; done
+NETWORK FORENSICS
+- Network Mapping Tools: draw.io, witeboard.com, draw.chat, smartdraw, ziteboard, tutorialspoint whiteboard, explain everything whiteboard
+- Mapping: Device type (router/host), hostnames, interface names, IPs/CIDRs for interfaces, TCP/UDP ports, MAC address, OS type/ver, known credentials
+- Mapping: Diagram devices line types, written information, coloring, groupings
 
 
 Section 4 (M,T,W): Data Transfer, Movement and Redirection

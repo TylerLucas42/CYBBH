@@ -641,8 +641,129 @@ PACKING/ENCODING
                 - 6 bits per digit, 4 characters = 3 bytes = 1 group
                 - padding used to fill any unused space in each 24-bit group
                 - base64 -w0 logoCyber.png (-w0 to remove line wrapping. output file converted to base64, -d decodes from base64)
-
-
+SSH TUNNELING
+- Tunneling: encapsulating a protocol inside another protocol (encapsulation -> transmission -> decapsulation)
+        - IPv6 transition uses tunneling (traffic tunneling - IPv6 over IPv4)
+        - Tunneling can be used to bypass IPv4-based security measures for malware/attacks
+        - Dual stack, 6in4, 6to4, 4in6, Teredo, ISATAP
+- Covert channels: using common and legitimate protocols to transfer data in illegitimate ways (bypassing security, violating policies, leaking data, unauthorized/hidden communication)
+        - Common protocols: ICMP, DNS, HTTP
+        - Timing indicators: TTL changes, delayed packets between nodes, variances between transmissions
+                - ICMP indicators: payload imbalance, request/response imbalance, large payloads in response
+                - DNS indicators: payloads exceeding 512 bytes or otherwise unusual, anything other than 1 response per 1 request, burstiness or continuous use
+                - HTTP indicators: GET request including .png, .exe, etc.
+        - Can hide data inside headers - IP Header (TOS, IP ID, Flags + Fragmentation, and Options) or TCP Header (Reserved, URG Pointer, and Options)
+        - Detect via host analysis (requires knowledge of expected application behavior) or network analysis (requires knowledge of your network and normal network protocols/traffic)
+                - BASELINING
+        - ICMP Covert channel tools: ptunnel, Loki, 007shell, ICMP Backdoor, B0CK, Hans
+        - DNS Covert channel tools: OzymanDNS, NSTX, dns2tcp, iodine, heyoka, dnscat2
+        - HTTP Covert channel tools: tunnelshell tools, HTTPTunnel, SirTunnel, go HTTP tunnel
+STEGGING
+- Steganography: hiding messages inside legit information objects
+        - Methods: injection, substitution, propagation
+- Substitution: inserting message into insignificant portion of the file. Most common method (example: change color palette +1/-1)
+- Injection: inserting message into unused (whitespace) of the file, usually in a graphic. 2nd most common method (adds size to the file, hard to detect unless you have original file
+        - Tools: StegHide
+- Propagation: generates a new file entirely. 3rd most common method (requires special software to manipulate file)
+        - Tools: StegSecret, HyDEn, Spammimic
+SSH TUNNELING
+- Don't reuse ports (it will give you the nasty remote host ID changed / someone may be eavesdropping warning)
+        - copy/paste the ssh-keygen message to remove the host key from the known_hosts file if it was just you messing up
+- On first connect, you will need to approve the public key (key is saved to /home/student/.ssh/known_hosts)
+- SSH: is capable of tunneling other protocols through it (examples: terminator through ssh, X11 forwarding, xdg to open png files, etc.)
+        - NOTE: when tunneling an insecure protocol like telnet or HTTP through SSH, it GAINS SSH-LEVEL SECURITY
+        - used for tunneling & port forwarding - proxy connections
+- Keys:
+        - User Key - Asymmetric public key used to identify the user to the server
+        - Host Key - Asymmetric public key used to identify the server to the user
+        - Session Key - Symmetric key created by the client and server to protect the session’s communication.
+- Configuration files:
+        - Client Configuration File (/etc/ssh/ssh_config)
+        - Server Configuration File (/etc/ssh/sshd_config)
+        - Known Hosts File (~/.ssh/known_hosts)
+- SSH port forwarding/tunneling options:
+        -L - Creates a port on the client mapped to a ip:port via the server
+        -R - Creates the port on the server mapped to a ip:port via the client
+        -D - Creates a port on the client and sets up a SOCKS4 proxy tunnel where the target ip:port is specified dynamically
+        -NT - Do not execute a remote command and disable pseudo-tty (will hang window)
+SSH TUNNELING COMMANDS
+- USE 51600-51699 ports
+- Local port forwarding to localhost of server:
+        - Basic syntax: ssh -p <optional alt port> <user>@<server ip> -L <local bind port>:<tgt ip>:<tgt port> -NT
+                OR ssh -L <local bind port>:<tgt ip>:<tgt port> -p <alt port> <user>@<server ip> -NT
+        On local: ssh student@172.16.1.15 -L 1122:localhost:22, then run ssh student@localhost -p 1122 (SSH)
+                OR On local: ssh -L 1122:localhost:22 student@172.16.1.15, then run ssh student@localhost -p 1122
+        On local: ssh student@172.16.1.15 -L 1123:localhost:23, then run telnet localhost 1123 (Telnet)
+                OR On local: ssh -L 1123:localhost:23 student@172.16.1.15, then run telnet localhost 1123
+        On local: ssh student@172.16.1.15 -L 1180:localhost:80, then run firefox http://localhost:1180 (HTTP)
+                OR On local: ssh -L 1180:localhost:80 student@172.16.1.15, then run firefox http://localhost:1180
+- Local port forwarding to remote target via server:
+        On local: ssh student@172.16.1.15 -L 2222:172.16.40.10:22, then ssh student@localhost -p 2222 (SSH)
+                OR On local: ssh -L 2222:172.16.40.10:22 student@172.16.1.15, then ssh student@localhost -p 2222
+        On local: ssh student@172.16.1.15 -L 2223:172.16.40.10:23, then telnet localhost 2223 (Telnet)
+                OR On local: ssh student@172.16.1.15 -L 2223:172.16.40.10:23, then telnet localhost 2223
+        On local: ssh student@172.16.1.15 -L 2280:172.16.40.10:80, then firefox http://localhost:2280 (HTTP)
+                OR On local: ssh -L 2280:172.16.40.10:80 student@172.16.1.15, then firefox http://localhost:2280
+- Forward through tunnel:
+        On local: ssh student@172.16.1.15 -L 2222:172.16.40.10:22 (SSH)
+             then ssh student@localhost -p 2222 -L 3322:172.16.82.106:22
+             then ssh student@localhost -p 3322
+        On local: ssh student@172.16.1.15 -L 2222:172.16.40.10:22 (Telnet)
+             then ssh student@localhost -p 2222 -L 3323:172.16.82.106:23
+             then telnet localhost 3323
+        On local: ssh student@172.16.1.15 -L 2222:172.16.40.10:22 (HTTP)
+             then ssh student@localhost -p 2222 -L 3380:172.16.82.106:80
+             then firefox http://localhost:3380
+- Dynamic port forwarding:
+        - Basic syntax: ssh <user>@<server ip> -p <alt port> -D <port> -NT OR ssh <user>@<server ip> -p <alt port> -D <port> -NT
+        - Proxychains default port is 9050
+        - Creates a dynamic socks4 proxy that interacts alone, or with a previously established remote or local port forward
+        - Allows the use of scripts and other userspace programs through the tunnel
+        On local: ssh student@172.16.1.15 -D 9050 OR ssh -D 9050 student@172.16.1.15 (1 step)
+                then on local:
+                proxychains ./scan.sh
+                proxychains nmap -Pn 172.16.40.0/27 -p 21-23,80
+                proxychains ssh student@172.16.40.10
+                proxychains telnet 172.16.40.10
+                proxychains wget -r http://172.16.40.10
+                proxychains wget -r ftp://172.16.40.10
+        On local: ssh student@172.16.1.15 -L 2222:172.16.40.10:22 OR ssh -L 2222:172.16.40.10:22 student@172.16.1.15
+                then on local: ssh student@localhost -p 2222 -D 9050 OR ssh -D 9050 student@localhost -p 2222
+                then on local:
+                proxychains ./scan.sh
+                proxychains nmap -Pn 172.16.82.96/27 -p 21-23,80
+                proxychains ssh student@172.16.82.106
+                proxychains telnet 172.16.82.106
+                proxychains wget -r http://172.16.82.106
+                proxychains wget -r ftp://172.16.82.106
+- Remote port forwarding from localhost of client:
+        - Basic syntax: ssh -p <optional alt port> <user>@<server ip> -R <remote bind OR ssh -R <remote bind port>:<tgt ip>:<tgt port> -p <alt port> <user>@<server ip> -NT
+        On remote: ssh student@10.10.0.40 -R 4422:localhost:22 OR ssh -R 4422:localhost:22 student@10.10.0.40 (SSH)
+                then on local: ssh student@localhost -p 4422
+        On remote: ssh student@10.10.0.40 -R 4423:localhost:23 OR ssh -R 4423:localhost:23 student@10.10.0.40 (Telnet)
+                then on local: telnet localhost 4423
+        On remote: ssh student@10.10.0.40 -R 4480:localhost:80 OR ssh -R 4480:localhost:80 student@10.10.0.40 (HTTP)
+                then on local: firefox http://localhost:4480
+- Remote port forwarding to remote target via client:
+        On remote: ssh student@10.10.0.40 -R 5522:172.16.40.10:22 OR ssh -R 5522:172.16.40.10:22 student@10.10.0.40 (SSH)
+                then on local: ssh student@localhost -p 5522
+        On remote: ssh student@10.10.0.40 -R 5523:172.16.40.10:23 OR ssh -R 5523:172.16.40.10:23 student@10.10.0.40 (Telnet)
+                then on local: telnet localhost 5523
+        On remote: ssh student@10.10.0.40 -R 5580:172.16.40.10:80 OR ssh -R 5580:172.16.40.10:80 student@10.10.0.40 (HTTP)
+                then on local: firefox http://localhost:5580
+- Combined / bridging remote & local port forwarding
+        On local: ssh student@172.16.1.15 -L 2223:172.16.40.10:23 -NT OR ssh -L 2223:172.16.40.10:23 student@172.16.1.15 -NT
+                then on local: telnet localhost 2223
+        On remote: ssh student@172.16.1.15 -R 1122:localhost:22 OR ssh -R 1122:localhost:22 student@172.16.1.15
+        On local: ssh student@172.16.1.15 -L 2222:localhost:1122 OR ssh -L 2222:localhost:1122 student@172.16.1.15
+        On local: ssh student@localhost -p 2222 -D 9050 OR ssh -D 9050 student@localhost -p 2222
+        then on local:
+        proxychains ./scan.sh
+        proxychains nmap -Pn -sT 172.16.82.96/27 -p 21-23,80
+        proxychains ssh student@172.16.82.106
+        proxychains telnet 172.16.82.106
+        proxychains wget -r http://172.16.82.106
+        proxychains wget -r ftp://172.16.82.106
 
 
 Section 5 (Th): Network Analysis

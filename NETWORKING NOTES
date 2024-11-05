@@ -688,6 +688,7 @@ SSH TUNNELING
         -NT - Do not execute a remote command and disable pseudo-tty (will hang window)
 SSH TUNNELING COMMANDS
 - USE 51600-51699 ports
+- Localhost = loopback (127.0.0.1)
 - Local port forwarding to localhost of server:
         - Basic syntax: ssh -p <optional alt port> <user>@<server ip> -L <local bind port>:<tgt ip>:<tgt port> -NT
                 OR ssh -L <local bind port>:<tgt ip>:<tgt port> -p <alt port> <user>@<server ip> -NT

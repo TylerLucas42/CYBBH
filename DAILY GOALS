@@ -7,7 +7,9 @@ IH Creds:
 Student#: student8
 Command: ssh student@10.50.31.160 -X
 Password: password
-Internal IP: 10.10.0.40 (use tcpdump, tshark, wireshark, scapy and google) (t1 & t2: both packet-headers.pcapng, t3: BPFCheck.pcap)
+
+T3: 10.3.0.10
+T4: 10.2.0.1
 
 
 

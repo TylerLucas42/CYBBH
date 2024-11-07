@@ -772,6 +772,8 @@ SSH TUNNELING COMMANDS
         proxychains telnet 172.16.82.106
         proxychains wget -r http://172.16.82.106
         proxychains wget -r ftp://172.16.82.106
+- Tekniques
+        - Once you've got onto a box, run ip addr, and ip n to get host IP and connected IPs. Also run a ping sweep
 
 
 Section 5 (Th): Network Analysis

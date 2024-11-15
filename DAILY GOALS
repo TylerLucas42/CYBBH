@@ -48,3 +48,121 @@ Section 4 (M,T,W): 0 / 250 / 355
 Section 5 (Th): 0 / 228 / 325
 Section 6 (F): 0 / 116 / 165
 Section 7/C (M,T): 0 / 280 / 400
+
+
+
+
+
+Daily tunneling step by step:
+
+Steps: 
+1. Host Enumeration
+2. Port Forward
+3. Proxychains
+4. Network Enumeration
+(repeat)
+
+checklist:
+1. nmap http/ftp
+2. /usr/share/cctc
+
+
+IP 1 Pivot Float: 10.50.20.84 (22, 80, 21/23 filtered) (pivot for network fundamentals & programming sections)
+IP 1 Pivot User: net5_student16
+IP 1/2 Network: 10.1.1.30/25
+IP 2.2: 10.1.1.11 (21,23) (finished - no ssh connection regardless)
+IP 2.3: 10.1.1.25 (21) (finished - no ssh connection regardless)
+IP 2.4: 10.1.1.33 (21,23,80) (finished - no ssh connection regardless)
+IP 2/3 Network: 1.1.1.1/29
+IP 4 (box 5): 1.1.1.2
+
+
+IP 6 pivot: 10.50.21.126/32 (SSH runs on high port - adjust my ttl via iptables to look like a cisco device)
+IP 6/7 Network: 10.2.2.6/28
+IP 7: 10.2.2.7 (23,80)
+IP 7 creds: net5_comrade16 / H0ld 73h d00r?
+IP 7/8 Network: eth1 10.10.10.129/25
+
+IP 8.8: 10.10.10.140 (21, SSH on 301)
+IP 8.8/9 Network: eth1 192.168.10.44/27
+IP 9: 192.168.10.39 (21, HTTP on 3790, also got 4444 & 5687)
+
+IP 8.10: 10.10.10.167 (80, SSH on 404)
+IP 8.10/11 Network: eth1  192.168.10.70/27
+IP 11: 192.168.10.80 (21, HTTP on 9050)
+
+IP 8.12: 10.10.10.182 (21, SSH on 504)
+IP 8.12/13 Network: eth1 192.168.10.99/27
+IP 13: 192.168.10.101 (21, 22, HTTP on 584)
+IP 14: 192.168.10.111 (21, 22, HTTP on 2223)
+    (snort is running here, look through its file locations)
+
+
+1. nmap (Float IP) -T4 -p  20-23,80
+    - port 80 is open
+2. wget -r http://(Float IP)
+    - got a png, xdg-open the png for the info (got a port above the well-known - high port 1)
+3. nmap (Float IP) -T4 -p (high port 1)
+    - turns out ssh is running on this port
+4. IP 1 Host Enumeration: ssh (IP 1 user)@(Float IP) -p (high port 1)
+    - host enumeration: hostname, ip a, ip n, ip r, ss -ntlp, ping sweep (for i in {1..254}; do (ping -c 1 172.16.82.$i | grep "bytes from" &) ; done)
+    - found that Float IP is connected to (IP 1/2 network)
+    - exit
+5. IP 1 Proxychains: ssh (IP 1 user)@(Float IP) -D 9050 -p (high port 1)
+    - now have proxychains on Float IP through ssh
+6. proxychains nmap -T4 -Pn -p 21-23,80 (IP 1/2 network)
+    - found a png on the http .28
+7. proxychains wget -r http://(IP 1)
+    - got a png, ssh is blocked but 21 is open
+8. proxychains nc 172.17.17.28 21
+    - yes, FTP is open AND TELNET IS OPEN
+9. proxychains wget -r ftp://(IP 1)
+10. Port Forward 1: ssh (IP 1 user)@(IP 1 float) -L (RHP1):(IP 2):23 -p (high port 1)
+    - now we have a port forward to IP 2
+11. IP 2 Host Enumeration: telnet 127.0.0.1 (RHP1)
+    - host enumeration: hostname, ip a, ip n, ip r, ss -ntlp, ping sweep (for i in {1..254}; do (ping -c 1 172.16.82.$i | grep "bytes from" &) ; done)
+    - found a high port 2 via ss -ntlp
+    - found 2 IPs via ping sweep
+12. IP 2 Remote Port Forward (from IP 2): ssh (IP 1 user)@(IP 1) -R (RHP2):localhost:(high port 2) -p (high port 1)
+13. IP 2 Port Forward (from internet host): ssh (IP 1 user)@(IP 1) -L (RHP3):localhost:(RHP2) -p (high port 1)
+    - this connects remote to local port forward
+    14. nc 127.0.0.1 (RHP3)
+        - ssh is open on this port, huzzah (testing)
+15. IP 2 Proxychains: : ssh (IP 2 user)@localhost -D 9050 -p (RHP3)
+16. IP 2 Network Enumeration: proxychains nmap etc.
+    - discovered ports 21 & 80 on IP 3
+    17. proxychains wget -r (ftp/http)://(IP 3)
+    18. proxychains nmap -T4 -P -vvvv -p 1024- (IP 3)
+        - discovered high port 3 is open
+    19. proxychains nc 192.168.20.160 (high port 3)
+        - discovered ssh is on high port 3
+19. IP 3 Port Forward: ssh (IP 2 user)@localhost -p (RHP3) -L (RHP4):(IP 3):(high port 3)
+    20. nc 127.0.0.1 52202
+        - it shows SSH intro, good to go (testing)
+20. IP 3 Host Enumeration: ssh (IP 3 user)@localhost -p (RHP4)
+    - hostname, ip a, ip n, ip r, ss -ntlp, ping sweep (for i in {1..254}; do (ping -c 1 172.16.82.$i | grep "bytes from" &) ; done)
+    - discovered this is also part of 10.10.12.99/25 network
+    - shows 3 other ips have been talked to and one is a router so whatever
+21. IP 3 Proxychains: ssh (IP 3 user)@localhost -p (RHP4) -D 9050
+    - will have to delete the last port forward first, then run the above
+22. IP 3 Network Enumeration: proxychains nmap -Pn -T4 -vvvv etc.
+    - found a .121 with 21 & 80 open
+    23. proxchains nc 21 & 80, then proxchains wget http/ftp
+
+IP 1 Float: 10.50.20.10 (same box as IP 1)
+High port 1: 1234
+IP 1/2 Network: 172.17.17.17/28
+IP 1 user: Bender
+IP 1: 172.17.17.17
+IP 2/3 Network: 192.168.30.130/26
+IP 2 user: Philip
+IP 2: 172.17.17.28
+High port 2: 4321
+IP 3/4 Network: 192.168.30.130/26
+IP 3: 192.168.39.150
+IP 3 user: 
+
+
+
+
+

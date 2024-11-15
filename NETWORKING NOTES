@@ -336,6 +336,8 @@ DAY 2: TRAFFIC CAPTURE
         - Searches for signatures by these methods: browsers, search robots, command line tools, most operating systems
         - P0F (passive OS fingerprinting) signature databse: less /etc/p0f/p0f.fp
         - P0F help: p0f -h / run on interface: p0f -i eth0 / run on pcap: p0f -r capture.pcap
+        - Option for hex dump view: -XX
+        - Option for verbose view: -vv
         - output to greppable log file: p0f -r wget.pcap -o /var/log/p0f.log
                 - cat /var/log/p0f.log | grep {expression}
 
@@ -781,7 +783,197 @@ Section 5 (Th): Network Analysis
 
 
 Section 6 (F): Network Traffic Filtering
+- Purpose of filtering: block malicious traffic, decrease network load, ensure efficient data flow, obfuscate network internals
+- Filtering applications:
+        - Network traffic allow or block traffic to/from remote locations
+        - Email addresses: block unwanted email to reduce risk or increase productivity
+        - Computer applications: for security from vulnerable software
+        - MAC filtering: security to allow only specific computers access to a network
+- Traffic filtering concepts: Protocols operation, header analysis, network recon, tunnel analysis, IOA & IOC, malware analysis
+- Block-Listing (Blacklist): Implicit ACCEPT, Explicity DENY
+- Allow-Listing (Whitelist): Implicit DENY, Explicitly ACCEPT
+- Routed firewall mode: Firewall is on the router
+- Transparent firewall mode: Firewall is internal relative to the router (anyone can access the router, but not past that)
+- Firewall filtering methods:
+        - Stateless (Packet) filtering: L3/4
+        - Stateful Inspection: L4
+        - Circuit-Level: L5
+        - Application Layer: L7
+        - Next Generation: L7
+- 3 Types of firewalls:
+        - Software firewalls - usually host-based
+        - Hardware firewalls - usually network-based
+        - Cloud firewalls - provided as a service
+- Traffic Directions:
+        - A to B:
+                - Localhost to remote host (you are sending to the server)
+                - Or, return traffic from remote host back to localhost (server is responding to you, the client)
+        - B to A:
+                - Remote host to localhost (client is trying to connect to you, the server)
+                - Or, you are responding back to the client
+- Host-based filtering:
+        - Windows - Norton, Mcafee, ZoneAlarm, Avast, etc.
+        - Linux - iptables, nftables, UFW, firewalld.
+        - MAC - Little Snitch, LuLu, Vallum, etc.
+- Netfilter Hooks -> Chain 
+                - ethIN -> PREROUTING
+        - NF_IP_PRE_ROUTING → PREROUTING
+                -> routing decision -> INPUT or FORWARD
+        - NF_IP_FORWARD → FORWARD (bypasses input/local processes/output steps)
+                -> routing decision 2 -> POSTROUTING
+        - NF_IP_LOCAL_IN → INPUT
+                -> local processes -> OUTPUT
+        - NF_IP_LOCAL_OUT → OUTPUT
+                -> routing decision 2 -> POSTROUTING
+        - NF_IP_POST_ROUTING → POSTROUTING
+                -> ethOUT
+- Netfilter paradigms:
+        - Tables - contain chains
+        - Chains - contain rules
+        - Rules - dictate what to match & what actions to take on matches
+- Netfilter apps based on application:
+        - iptables - for IPv4 packet administration
+        - ip6tabes - for IPv6 packet administration
+        - ebtables - for ethernet bridge frame table administration
+        - arptables - for ARP packet administration
+IPTABLES
+- iptables tables:
+        - filter - default table. Provides packet filtering. INPUT, FORWARD, and OUTPUT
+        - nat - used to translate private ←→ public address and ports. PREROUTING, POSTROUTING, INPUT, and OUTPUT
+        - mangle - provides special packet alteration. Can modify various fields header fields. ALL CHAINS
+        - raw - used to configure exemptions from connection tracking. PREROUTING and OUTPUT
+        - security - used for Mandatory Access Control (MAC) networking rules. INPUT, FORWARD, and OUTPUT
+- iptables chains:
+        - prerouting - packets entering NIC before routing
+        - input - packets to localhost after routing
+        - forward - packets routed from one NIC to another. (needs to be enabled)
+        - output - packets from localhost to be routed
+        - postrouting - packets leaving system after routing
+- Common iptables options:
+        -t - Specifies the table. (Default is filter)
+        -A - Appends a rule to the end of the list or below specified rule
+        -I - Inserts the rule at the top of the list or above specified rule
+        -R - Replaces a rule at the specified rule number
+        -D - Deletes a rule at the specified rule number
+        -F - Flushes the rules in the selected chain
+        -L - Lists the rules in the selected chain using standard formatting
+        -S - Lists the rules in the selected chain without standard formatting
+        -P - Sets the default policy for the selected chain
+        -n - Disables inverse lookups when listing rules
+        --line-numbers - Prints the rule number when listing rules
+        -p - Specifies the protocol
+                -p icmp [ --icmp-type type# { /code# } ]
+                -p tcp [ --sport | --dport { port1 |  port1:port2 } ]
+                -p tcp [ --tcp-flags SYN,ACK,PSH,RST,FIN,URG,ALL,NONE ]
+                -p udp [ --sport | --dport { port1 | port1:port2 } ]
+        -i [iface] - Specifies the input interface
+        -o [iface] - Specifies the output interface
+        --sport - Specifies the source port
+        --dport - Specifies the destination port
+        -s [ ip / net/CIDR ] - Specifies the source IP
+        -d [ ip / net/CIDR ] - Specifies the destination IP
+        -j [ ACCEPT | REJECT | DROP ] - Specifies the jump target action (reject = send ICMP response, drop = no response)
+        -m - enables iptables extensions
+                -m state --state NEW,ESTABLISHED,RELATED,UNTRACKED,INVALID
+                -m mac [ --mac-source | --mac-destination ] [mac]
+                -p [tcp|udp] -m multiport [ --dports | --sports | --ports { port1 | port1:port15 } ]
+                -m bpf --bytecode [ 'bytecode' ]
+                -m iprange [ --src-range | --dst-range { ip1-ip2 } ]
+        - View table: sudo iptables -L
+        - Change default policy (CHANGE TO DEFAULT ACCEPT BEFORE FLUSHING TABLE): iptables -t [table] -P [chain] [action]
+        - Flush table: iptables -t [table] -F
+        - List rules with numbers: iptables -t [table] -L --line-numbers
+        - List rules as system commands: iptables -t [table] -S
+        - Insert rule before rule number #: iptables -t [table] -I [chain] [rule num #] [rules] -j [action]
+        - Replace rule at number #: iptables -t [table] -R [chain] [rule num #] [rules] -j [action]
+        - Delete rule at number #: iptables -t [table] -D [chain] [rule num #]
+- Basic iptables syntax: iptables -t [table] -A [chain] [rules] -j [action]
+        - Table: filter*, nat, mangle
+        - Chain: INPUT, OUTPUT, PREROUTING, POSTROUTING, FORWARD
+Iptables NAT rules
+- Statement operator: applicable chains
+        - snat: postrouting, input
+        - masquerade: postrouting
+        - dnat: prerouting, output
+        - redirect: prerouting, output
+- Source NAT: 
+        - iptables -t nat -A POSTROUTING -p tcp -o eth0 -s 192.168.0.1 -j SNAT --to 1.1.1.1:9000 (changes source IPv4 from private IP to 1.1.1.1 and srcport to 9000)
+        - iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+- Destination NAT:
+        - iptables -t nat -A PREROUTING -i eth0 -d 8.8.8.8 -j DNAT --to 10.0.0.1 (changes dest. IPv4 from 8.8.8.8 to 10.0.0.1)
+        - iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 22 -j DNAT --to 10.0.0.1:22
+        - iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j DNAT --to 10.0.0.2:80
+        - iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 443 -j DNAT --to 10.0.0.3:443
+        - iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080
+Iptables Mangle Rules:
+- iptables -t mangle -A POSTROUTING -o eth0 -j TTL --ttl-set 128
+- iptables -t mangle -A POSTROUTING -o eth0 -j DSCP --set-dscp 26
+NFTTABLES
+- 3 chain types:
+        - filter: to filter packets - can be used with arp, bridge, ip, ip6, and inet families
+        - route: to reroute packets - can be used with ip and ipv6 families only
+        - nat: used for Network Address Translation - used with ip and ip6 table families only
+- Syntax: 
+1. Creat the table: nft add table [family] [table]
+        - [family] = ip*, ip6, inet, arp, bridge and netdev.
+        - [table] = user provided name for the table.
+2. Creat the base chain: nft add chain [family] [table] [chain] { type [type] hook [hook] priority [priority] \; policy [policy] \;}
+        - [chain] = User defined name for the chain.
+        - [type] =  can be filter, route or nat.
+        - [hook] = prerouting, ingress, input, forward, output or postrouting.
+        - [priority] = user provided integer. Lower number = higher priority. default = 0. Use "--" before negative numbers.
+        - ; [policy] ; = set policy for the chain. Can be accept (default) or drop.
+                - Use "\" to escape the ";" in bash
+3. Creat a rule in the chain: nft add rule [family] [table] [chain] ([matches] (matches)) [statement]
+        - [matches] = typically protocol headers(i.e. ip, ip6, tcp, udp, icmp, ether, etc)
+        - (matches) = these are specific to the [matches] field.
+        - [statement] = action performed when packet is matched. Some examples are: log, accept, drop, reject, counter, nat (dnat, snat, masquerade)
+(rule match options):
+        ip [ saddr | daddr { ip | ip1-ip2 | ip/CIDR | ip1, ip2, ip3 } ]
+        tcp flags { syn, ack, psh, rst, fin }
+        tcp [ sport | dport { port1 | port1-port2 | port1, port2, port3 } ]
+        udp [ sport| dport { port1 | port1-port2 | port1, port2, port3 } ]
+        icmp [ type | code { type# | code# } ]
+        ct state { new, established, related, invalid, untracked }
+        iif [iface]
+        oif [iface]
+(modify nftables):
+        nft { list | flush } ruleset
+        nft { delete | list | flush } table [family] [table]
+        nft { delete | list | flush } chain [family] [table] [chain]
+        - GOOD COMMEND: sudo nft list ruleset -ann
+        - List table with handle numbers: nft list table [family] [table] [-a]
+        - Adds after position: nft add rule [family] [table] [chain] [position <position>] [matches] [statement]
+        - Inserts before position: nft insert rule [family] [table] [chain] [position <position>] [matches] [statement]
+        - Replaces rule at handle: nft replace rule [family] [table] [chain] [handle <handle>] [matches] [statement]
+        - Deletes rule at handle: nft delete rule [family] [table] [chain] [handle <handle>]
+        - Change current policy: nft add chain [family] [table] [chain] { \; policy [policy] \;}
+Nftables NAT Rules:
+- Create NAT table: nft add table ip NATTY (arbitrary)
+- Create NAT chains:
+        - nft add chain ip NATTY PREROUTING { type nat hook prerouting priority 0 \; }
+        - nft add chain ip NATTY POSTROUTING { type nat hook postrouting priority 0 \; }
+- Source NAT:
+        - nft add rule ip NATTY POSTROUTING ip saddr 10.10.0.40 oif eth0 snat 144.15.60.11
+        - nft add rule ip NATTY POSTROUTING oif eth0 masquerade
+- Destination NAT:
+        - nft add rule ip NATTY PREROUTING iif eth0 ip daddr 144.15.60.11 dnat 10.10.0.40
+        - nft add rule ip NATTY PREROUTING iif eth0 tcp dport { 80, 443 } dnat 10.1.0.3
+        - nft add rule ip NATTY PREROUTING iif eth0 tcp dport 80 redirect to 8080
+Nftables Mangle Rules:
+- nft add table ip MANGLE
+- nft add chain ip MANGLE INPUT {type filter hook input priority 0 \; policy accept \;}
+- nft add chain ip MANGLE OUTPUT {type filter hook output priority 0 \; policy accept \;}
+- nft add rule ip MANGLE OUTPUT oif eth0 ip ttl set 128
+- nft add rule ip MANGLE OUTPUT oif eth0 ip dscp set 26
 
 
 
 Section 7 (M,T): Capstone
+
+
+
+
+
+
+

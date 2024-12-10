@@ -1,4 +1,25 @@
 
 TEST STUFF:
 Test Site: 10.50.22.148:8000
+CTF Username: LUMI-007-M
+Off-limits IPs: 10.10.xx.xx / xx.xx.xx.90
+usacys
+UnitedStatesArmyCyberSchool
+
+
+
+
+IP Network:
+
+ministry-defense-08: 10.50.32.19 / 10.0.28.52 (22,80 - openupthedoor:B12c3b34f)
+-> defense-nix1-08: 192.168.28.177 (22,21254 - Fpalic:Birdperson)
+-> defense_kp: 192.168.28.182 (22,80)
+------------------------
+ministry-defense-08: 10.50.32.19 / 10.0.28.52 (22,80 - openupthedoor:B12c3b34f)
+-> R-AND-D-WIN-08: 192.168.28.5 (22,135,139,445,3389,etc - Rsanch:ScaryTerry)
+-> r-and-d-nix2-08: 192.168.28.10 (22 - Kmichae:MrMeeseeks)
+-> r-and-d-nix1-08: 192.168.28.19 (22 - Msmith:Squanchy)
+
+MOVEUP.EXE will create hack:pass123 if we can run the exe at a higher priv level - added to Admin & RDP users groups)
+
 
